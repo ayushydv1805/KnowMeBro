@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-const SUPABASE_URL = 'https://acotqumjfmipssnwupdw.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_wRCWwo6Pzhkm-6oligdx6A_Jwrfq9PH';
+const SUPABASE_URL = 'https://gnujgajomorbwpadgeay.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_9gcS-1_Ei0YFZ6iqM1xyGQ_Hz6-Ztsx';
 
 const STARTER_QUESTIONS = [
   { question:'What is my favourite food?', options:['Pizza','Biryani','Burger','Momos'], image:'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=85', correct:null },
