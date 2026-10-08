@@ -1,499 +1,89 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
+const SUPABASE_URL = 'https://acotqumjfmipssnwupdw.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_wRCWwo6Pzhkm-6oligdx6A_Jwrfq9PH';
+
 const STARTER_QUESTIONS = [
-  { question: 'What is my favourite food?', options: ['Pizza', 'Biryani', 'Burger', 'Momos'], correct: null },
-  { question: 'What would I choose for a perfect weekend?', options: ['Road trip', 'Gaming at home', 'Movie marathon', 'Sleeping all day'], correct: null },
-  { question: 'What kind of music do I enjoy the most?', options: ['Punjabi', 'Haryanvi', 'Bollywood', 'English'], correct: null },
-  { question: 'What is my ideal travel plan?', options: ['Mountains', 'Beach', 'Big city', 'Village getaway'], correct: null },
-  { question: 'What do I usually do when I am bored?', options: ['Listen to music', 'Play games', 'Scroll social media', 'Call a friend'], correct: null },
-  { question: 'Which describes my personality best?', options: ['Chill', 'Funny', 'Adventurous', 'Quiet'], correct: null },
-  { question: 'What type of movies do I prefer?', options: ['Comedy', 'Thriller', 'Horror', 'Romance'], correct: null },
-  { question: 'What would I rather do with friends?', options: ['Hang out outside', 'Play games', 'Watch a movie', 'Just talk'], correct: null },
-  { question: 'When am I usually more active?', options: ['Early morning', 'Afternoon', 'Evening', 'Late night'], correct: null },
-  { question: 'What matters most to me in a friendship?', options: ['Trust', 'Humour', 'Loyalty', 'Shared interests'], correct: null }
+  { question:'What is my favourite food?', options:['Pizza','Biryani','Burger','Momos'], image:'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=85', correct:null },
+  { question:'What would I choose for a perfect weekend?', options:['Road trip','Gaming at home','Movie marathon','Sleeping all day'], image:'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1000&q=85', correct:null },
+  { question:'What kind of music do I enjoy the most?', options:['Punjabi','Haryanvi','Bollywood','English'], image:'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1000&q=85', correct:null },
+  { question:'What is my ideal travel plan?', options:['Mountains','Beach','Big city','Village getaway'], image:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=85', correct:null },
+  { question:'What do I usually do when I am bored?', options:['Listen to music','Play games','Scroll social media','Call a friend'], image:'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1000&q=85', correct:null },
+  { question:'Which describes my personality best?', options:['Chill','Funny','Adventurous','Quiet'], image:'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1000&q=85', correct:null },
+  { question:'What type of movies do I prefer?', options:['Comedy','Thriller','Horror','Romance'], image:'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1000&q=85', correct:null },
+  { question:'What would I rather do with friends?', options:['Hang out outside','Play games','Watch a movie','Just talk'], image:'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1000&q=85', correct:null },
+  { question:'When am I usually more active?', options:['Early morning','Afternoon','Evening','Late night'], image:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1000&q=85', correct:null },
+  { question:'What matters most to me in a friendship?', options:['Trust','Humour','Loyalty','Shared interests'], image:'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1000&q=85', correct:null }
 ];
+const CATEGORIES=['Favorites','Personality','Memories','Random','This or That'];
 
-const CATEGORIES = ['Favorites', 'Personality', 'Memories', 'Random', 'This or That'];
+async function rpc(name, body) {
+  const res=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},body:JSON.stringify(body)});
+  const data=await res.json().catch(()=>null);
+  if(!res.ok) throw new Error(data?.message||data?.hint||data?.error||'Something went wrong.');
+  return data;
+}
+function Icon({name,size=20}){
+ const p={sun:<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></>,moon:<path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8Z"/>,arrow:<><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></>,spark:<><path d="m12 3-1.5 5.5L5 10l5.5 1.5L12 17l1.5-5.5L19 10l-5.5-1.5L12 3Z"/><path d="m19 17-.6 2.4L16 20l2.4.6L19 23l.6-2.4L22 20l-2.4-.6L19 17Z"/></>,check:<path d="m5 12 4 4L19 6"/>,link:<><path d="M10 13a5 5 0 0 0 7.1.1l1.8-1.8a5 5 0 0 0-7.1-7.1L10.8 5"/><path d="M14 11a5 5 0 0 0-7.1-.1l-1.8 1.8a5 5 0 0 0 7.1 7.1l1-1"/></>,back:<><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></>,eye:<><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></>,users:<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>};
+ return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{p[name]}</svg>;
+}
+function ThemeToggle({theme,setTheme}){return <button className="theme-toggle" type="button" onClick={()=>setTheme(theme==='dark'?'light':'dark')}><span className={theme==='light'?'active':''}><Icon name="sun" size={17}/></span><span className={theme==='dark'?'active':''}><Icon name="moon" size={17}/></span></button>}
+function Header({theme,setTheme,onHome}){return <header className="topbar"><button className="brand" onClick={onHome} type="button"><span className="brand-mark">K</span><span>KnowMe<span className="brand-accent">Bro</span></span></button><div className="header-actions"><a href="#how-it-works" className="nav-link">How it works</a><ThemeToggle theme={theme} setTheme={setTheme}/></div></header>}
 
-const SAMPLE_QUIZ = {
-  title: 'How well do you know me?',
-  creator: 'Your Name',
-  questions: [
-    { question: 'What is my go-to comfort food?', options: ['Pizza', 'Biryani', 'Burger', 'Momos'], correct: 1 },
-    { question: 'Which would I choose for a free weekend?', options: ['Road trip', 'Gaming', 'Movie marathon', 'Sleep all day'], correct: 0 },
-    { question: 'What am I most likely to do when I am bored?', options: ['Call a friend', 'Listen to music', 'Go outside', 'Scroll endlessly'], correct: 1 }
-  ]
-};
-
-function Icon({ name, size = 20 }) {
-  const paths = {
-    sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42" /></>,
-    moon: <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8Z" />,
-    arrow: <><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></>,
-    spark: <><path d="m12 3-1.5 5.5L5 10l5.5 1.5L12 17l1.5-5.5L19 10l-5.5-1.5L12 3Z" /><path d="m19 17-.6 2.4L16 20l2.4.6L19 23l.6-2.4L22 20l-2.4-.6L19 17Z" /></>,
-    check: <path d="m5 12 4 4L19 6" />,
-    plus: <><path d="M12 5v14" /><path d="M5 12h14" /></>,
-    trash: <><path d="M4 7h16" /><path d="M10 11v6M14 11v6" /><path d="m6 7 1 14h10l1-14M9 7V4h6v3" /></>,
-    link: <><path d="M10 13a5 5 0 0 0 7.1.1l1.8-1.8a5 5 0 0 0-7.1-7.1L10.8 5" /><path d="M14 11a5 5 0 0 0-7.1-.1l-1.8 1.8a5 5 0 0 0 7.1 7.1l1-1" /></>,
-    back: <><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></>,
-    eye: <><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" /></>,
-    users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
-  };
-
-  return (
-    <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {paths[name]}
-    </svg>
-  );
+function Landing({onCreate}){
+ return <main className="landing"><section className="hero"><div className="hero-glow glow-one"/><div className="hero-glow glow-two"/><div className="hero-copy"><div className="eyebrow"><Icon name="spark" size={16}/> The friendship test</div><h1>Do they really<br/><span>know you?</span></h1><p className="hero-text">Pick your answers, create a private challenge, send it to your friends, and see who actually pays attention.</p><div className="hero-actions"><button className="primary-btn large" onClick={onCreate}>Create my quiz <Icon name="arrow" size={19}/></button></div><div className="trust-row"><span><Icon name="check" size={16}/> 10 questions</span><span><Icon name="check" size={16}/> Real share links</span><span><Icon name="check" size={16}/> Live scores</span></div></div><div className="hero-card-wrap" aria-hidden="true"><div className="hero-art"><img src="/friendship-hero.svg" alt=""/></div><div className="floating-pill pill-top">🔥 Who knows you best?</div><div className="quiz-preview-card"><div className="preview-header"><div><span className="tiny-label">KNOWMEBRO CHALLENGE</span><h3>How well do you know me?</h3></div><span className="question-count">01 / 10</span></div><div className="preview-progress"><span/></div><img className="preview-real-image" src={STARTER_QUESTIONS[1].image} alt="Friends having fun"/></div><div className="floating-pill pill-bottom">🫂 8/10 — Real one!</div></div></section><section className="feature-strip" id="how-it-works"><div className="section-heading"><span className="eyebrow">Phase 2 is live</span><h2>Build it. Share it. <span>Expose the fake friends.</span> 😭</h2></div><div className="steps">{[['01','Build your quiz','Choose one answer for each ready-made question.'],['02','Share your challenge','Send the real link to anyone, on any device.'],['03','See who knows you','Friends submit their answers and your results update.']].map(([n,t,d])=><article className="step-card" key={n}><div className="step-visual"><img src={n==='01'?'/step-build.svg':n==='02'?'/step-share.svg':'/step-score.svg'} alt=""/></div><span className="step-number">{n}</span><h3>{t}</h3><p>{d}</p></article>)}</div></section></main>;
 }
 
-function ThemeToggle({ theme, setTheme }) {
-  return (
-    <button
-      className="theme-toggle"
-      type="button"
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-      title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-    >
-      <span className={theme === 'light' ? 'active' : ''}><Icon name="sun" size={17} /></span>
-      <span className={theme === 'dark' ? 'active' : ''}><Icon name="moon" size={17} /></span>
-    </button>
-  );
+function QuizBuilder({onBack,onDone}){
+ const [creator,setCreator]=useState(''); const [title,setTitle]=useState('How well do you know me?'); const [category,setCategory]=useState('Favorites'); const [questions,setQuestions]=useState(STARTER_QUESTIONS); const [active,setActive]=useState(0); const [loading,setLoading]=useState(false); const [error,setError]=useState('');
+ const current=questions[active]; const filled=questions.filter(q=>q.correct!==null).length;
+ const choose=i=>setQuestions(qs=>qs.map((q,n)=>n===active?{...q,correct:i}:q));
+ const create=async()=>{
+  if(!creator.trim()) return setError('Add your name or nickname first.');
+  if(filled!==10) return setError('Choose one answer for all 10 questions.');
+  setLoading(true); setError('');
+  try{
+   const data=await rpc('create_quiz',{p_creator:creator.trim(),p_title:title.trim()||'How well do you know me?',p_category:category,p_questions:questions});
+   localStorage.setItem('knowmebro-owner-'+data.share_code,data.creator_token);
+   onDone({...data,creator:creator.trim(),title:title.trim()||'How well do you know me?',category,questions});
+  }catch(e){setError(e.message)}finally{setLoading(false)}
+ };
+ return <main className="builder-page"><div className="builder-top"><button className="back-btn" onClick={onBack}><Icon name="back" size={18}/> Back</button><div className="builder-status"><span>{filled}/10 complete</span><div className="mini-progress"><span style={{width:(filled*10)+'%'}}/></div></div></div><div className="builder-layout"><aside className="question-nav"><div className="builder-intro"><span className="eyebrow">Phase 2</span><h2>Choose your answers</h2><p>Every question has a real image. Pick the option that describes you.</p></div><div className="question-list">{questions.map((q,i)=><button type="button" key={i} className={'question-nav-item '+(i===active?'active ':'')+(q.correct!==null?'filled':'')} onClick={()=>setActive(i)}><span>{String(i+1).padStart(2,'0')}</span><span className="question-nav-text">{q.question}</span>{q.correct!==null&&<Icon name="check" size={15}/>}</button>)}</div></aside><section className="builder-main"><div className="builder-card"><div className="builder-card-header"><div><span className="question-kicker">QUIZ DETAILS</span><h1>Set up your challenge</h1></div><span className="builder-badge"><Icon name="spark" size={14}/> {category}</span></div><div className="details-grid"><label className="field"><span>Your name / nickname</span><input value={creator} onChange={e=>setCreator(e.target.value)} placeholder="e.g. Ayush" maxLength={30}/></label><label className="field"><span>Quiz title</span><input value={title} onChange={e=>setTitle(e.target.value)} maxLength={50}/></label></div><label className="field category-field"><span>Question vibe</span><select value={category} onChange={e=>setCategory(e.target.value)}>{CATEGORIES.map(x=><option key={x}>{x}</option>)}</select></label></div><div className="builder-card question-editor"><div className="question-editor-top"><div><span className="question-kicker">QUESTION {String(active+1).padStart(2,'0')}</span><h2>What is true about you?</h2></div><span className="question-counter">{active+1} / 10</span></div><img className="question-real-image" src={current.image} alt={current.question}/><div className="predefined-question"><span className="question-kicker">READY-MADE QUESTION</span><h2>{current.question}</h2><p>Pick exactly one answer.</p></div><div className="options-label"><span>Your answer</span><small>Pick exactly one</small></div><div className="options-editor">{current.options.map((o,i)=><button type="button" className={'answer-row answer-choice '+(current.correct===i?'correct':'')} key={o} onClick={()=>choose(i)} aria-pressed={current.correct===i}><span className="correct-radio">{current.correct===i&&<span/>}</span><span className="answer-letter">{String.fromCharCode(65+i)}</span><span className="answer-choice-text">{o}</span>{current.correct===i&&<span className="correct-label">Your answer</span>}</button>)}</div><div className="editor-footer"><button type="button" className="secondary-btn" disabled={active===0} onClick={()=>setActive(x=>Math.max(0,x-1))}><Icon name="back" size={16}/> Previous</button>{active<9?<button type="button" className="primary-btn" onClick={()=>setActive(x=>x+1)}>Save & next <Icon name="arrow" size={17}/></button>:<button type="button" className="primary-btn" onClick={create} disabled={loading}>{loading?'Publishing...':'Publish & share'} <Icon name={loading?'check':'spark'} size={17}/></button>}</div>{error&&<div className="form-error">{error}</div>}</div></section></div></main>;
 }
 
-function Header({ theme, setTheme, onHome }) {
-  return (
-    <header className="topbar">
-      <button className="brand" onClick={onHome} type="button" aria-label="Go to KnowMeBro home">
-        <span className="brand-mark">K</span>
-        <span>KnowMe<span className="brand-accent">Bro</span></span>
-      </button>
-
-      <div className="header-actions">
-        <a href="#how-it-works" className="nav-link">How it works</a>
-        <ThemeToggle theme={theme} setTheme={setTheme} />
-      </div>
-    </header>
-  );
+function Created({quiz,onHome,onResults}){
+ const shareUrl=window.location.origin+'/?quiz='+quiz.share_code;
+ const copy=async()=>{try{await navigator.clipboard.writeText(shareUrl);alert('Challenge link copied!')}catch{window.prompt('Copy your challenge link:',shareUrl)}};
+ return <main className="created-page"><div className="success-orb"><Icon name="check" size={34}/></div><span className="eyebrow">Phase 2 • Published</span><h1>Your challenge is ready, <span>{quiz.creator}</span>.</h1><p className="created-subtitle">Your friend can now open this link from another phone, browser, or location.</p><div className="share-card"><div className="share-card-head"><div><span className="tiny-label">YOUR LIVE CHALLENGE</span><h2>{quiz.title}</h2></div><span className="quiz-id">#{quiz.share_code}</span></div><div className="share-link-box"><Icon name="link" size={18}/><span>{shareUrl}</span></div><div className="share-actions"><button className="primary-btn" onClick={copy}><Icon name="link" size={17}/> Copy link</button><button className="secondary-btn" onClick={onResults}><Icon name="users" size={16}/> View results</button></div><div className="phase-note"><Icon name="spark" size={18}/><span><strong>Send it now.</strong> Your friend answers privately and their score appears in your results.</span></div></div><div className="created-stats"><div><strong>10</strong><span>Questions</span></div><div><strong>4</strong><span>Answers each</span></div><div><strong>∞</strong><span>Friend attempts</span></div></div><button className="text-btn" onClick={onHome}>← Back to home</button></main>;
 }
 
-function Landing({ onCreate, onPreview }) {
-  return (
-    <main className="landing">
-      <section className="hero">
-        <div className="hero-glow glow-one" />
-        <div className="hero-glow glow-two" />
-
-        <div className="hero-copy">
-          <div className="eyebrow"><Icon name="spark" size={16} /> The friendship test</div>
-          <h1>Do they really<br /><span>know you?</span></h1>
-          <p className="hero-text">
-            Create 10 questions about yourself, send the challenge to your friends,
-            and discover who actually pays attention. No awkward group chats required.
-          </p>
-
-          <div className="hero-actions">
-            <button className="primary-btn large" onClick={onCreate} type="button">
-              Create my quiz <Icon name="arrow" size={19} />
-            </button>
-            <button className="ghost-btn large" onClick={onPreview} type="button">
-              <Icon name="eye" size={18} /> See a preview
-            </button>
-          </div>
-
-          <div className="trust-row">
-            <span><Icon name="check" size={16} /> 10 questions</span>
-            <span><Icon name="check" size={16} /> Shareable challenge</span>
-            <span><Icon name="check" size={16} /> Light + dark mode</span>
-          </div>
-        </div>
-
-        <div className="hero-card-wrap" aria-hidden="true"><div className="hero-art"><img src="/friendship-hero.svg" alt="" /></div>
-          <div className="floating-pill pill-top">🔥 Who knows you best?</div>
-          <div className="quiz-preview-card">
-            <div className="preview-header">
-              <div>
-                <span className="tiny-label">KNOWMEBRO CHALLENGE</span>
-                <h3>How well do you know me?</h3>
-              </div>
-              <span className="question-count">01 / 10</span>
-            </div>
-            <div className="preview-progress"><span /></div>
-            <p className="preview-question">What would I pick for a perfect Sunday?</p>
-            <div className="preview-options">
-              {['Road trip with friends', 'Stay home & game', 'Movie marathon', 'Sleep until noon'].map((option, i) => (
-                <div className={`preview-option ${i === 0 ? 'selected' : ''}`} key={option}>
-                  <span className="option-letter">{String.fromCharCode(65 + i)}</span>
-                  {option}
-                  {i === 0 && <span className="option-dot" />}
-                </div>
-              ))}
-            </div>
-            <div className="preview-next">Next question <Icon name="arrow" size={15} /></div>
-          </div>
-          <div className="floating-pill pill-bottom">🫂 8/10 — Real one!</div>
-        </div>
-      </section>
-
-      <section className="feature-strip" id="how-it-works">
-        <div className="section-heading">
-          <span className="eyebrow">Simple by design</span>
-          <h2>Make the quiz. Send the link. <span>Expose the fake friends.</span> 😭</h2>
-        </div>
-        <div className="steps">
-          {[
-            ['01', 'Build your quiz', 'Choose the answers that your friends should know about you.'],
-            ['02', 'Share your challenge', 'Send one simple link to your friends anywhere.'],
-            ['03', 'See who knows you', 'Compare scores and find your real ones.']
-          ].map(([number, title, text]) => (
-            <article className="step-card" key={number}>
-              <div className="step-visual"><img src={number === "01" ? "/step-build.svg" : number === "02" ? "/step-share.svg" : "/step-score.svg"} alt="" /></div><span className="step-number">{number}</span>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
-  );
+function FriendQuiz({code,onHome}){
+ const [quiz,setQuiz]=useState(null),[answers,setAnswers]=useState([]),[active,setActive]=useState(0),[name,setName]=useState(''),[loading,setLoading]=useState(true),[submitting,setSubmitting]=useState(false),[result,setResult]=useState(null),[error,setError]=useState('');
+ useEffect(()=>{rpc('get_quiz',{p_code:code}).then(setQuiz).catch(e=>setError(e.message)).finally(()=>setLoading(false))},[code]);
+ if(loading)return <main className="state-page"><div className="loading-orb"/><h1>Loading your challenge...</h1><p>Getting the quiz ready.</p></main>;
+ if(error)return <main className="state-page"><div className="error-emoji">😬</div><h1>Challenge not found</h1><p>{error}</p><button className="primary-btn" onClick={onHome}>Go home</button></main>;
+ if(result)return <main className="result-page"><div className="result-orb"><Icon name="check" size={40}/></div><span className="eyebrow">Challenge complete</span><h1>{result.score}/{result.total}</h1><h2>{result.score===result.total?'Bro, you actually know them. 😭🔥':result.score>=7?'Okay, you definitely pay attention. 👀':'Fake friend allegations incoming. 😂'}</h2><p>{quiz.creator} will see your score.</p><button className="primary-btn" onClick={onHome}>Back to KnowMeBro</button></main>;
+ const q=quiz.questions[active]; const picked=answers[active]; const finish=async()=>{if(!name.trim())return setError('Enter your name first.');if(answers.length!==quiz.questions.length||answers.some(x=>x===undefined))return setError('Answer every question.');setSubmitting(true);setError('');try{const r=await rpc('submit_quiz',{p_code:code,p_friend_name:name.trim(),p_answers:answers});setResult(r)}catch(e){setError(e.message)}finally{setSubmitting(false)}};
+ return <main className="friend-page"><div className="friend-shell"><div className="friend-top"><button className="back-btn" onClick={onHome}><Icon name="back" size={18}/> Home</button><span>{active+1} / {quiz.questions.length}</span></div>{active===0&&<div className="friend-welcome"><span className="eyebrow">A quiz by {quiz.creator}</span><h1>{quiz.title}</h1><p>Let's see how well you really know {quiz.creator}. No cheating. 😈</p><label className="friend-name"><span>Your name</span><input value={name} onChange={e=>setName(e.target.value)} placeholder="Enter your name"/></label></div>}<div className="friend-progress"><span style={{width:((active+1)/quiz.questions.length)*100+'%'}}/></div><div className="friend-question-card"><span className="question-kicker">QUESTION {String(active+1).padStart(2,'0')}</span><img className="question-real-image friend-image" src={q.image} alt="Question visual"/><h2>{q.question}</h2><div className="friend-options">{q.options.map((o,i)=><button type="button" key={o} className={'friend-option '+(picked===i?'selected':'')} onClick={()=>{setAnswers(a=>{const n=[...a];n[active]=i;return n});setError('')}}><span>{String.fromCharCode(65+i)}</span>{o}{picked===i&&<Icon name="check" size={18}/>}</button>)}</div></div>{error&&<div className="form-error">{error}</div>}<div className="friend-footer">{active>0?<button className="secondary-btn" onClick={()=>setActive(x=>x-1)}><Icon name="back" size={16}/> Previous</button>:<span/>}{active<quiz.questions.length-1?<button className="primary-btn" disabled={picked===undefined} onClick={()=>setActive(x=>x+1)}>Next question <Icon name="arrow" size={17}/></button>:<button className="primary-btn" disabled={picked===undefined||submitting} onClick={finish}>{submitting?'Submitting...':'Finish challenge'} <Icon name="check" size={17}/></button>}</div></div></main>;
 }
 
-function QuizBuilder({ onBack, onDone }) {
-  const [creator, setCreator] = useState('');
-  const [title, setTitle] = useState('How well do you know me?');
-  const [category, setCategory] = useState('Favorites');
-  const [questions, setQuestions] = useState(STARTER_QUESTIONS);
-  const [activeQuestion, setActiveQuestion] = useState(0);
-  const [saved, setSaved] = useState(false);
-
-  const current = questions[activeQuestion];
-  const filledCount = questions.filter(q => q.correct !== null).length;
-
-  const updateQuestion = (field, value) => {
-    setQuestions(prev => prev.map((q, i) => i === activeQuestion ? { ...q, [field]: value } : q));
-    setSaved(false);
-  };
-
-  const updateOption = (index, value) => {
-    setQuestions(prev => prev.map((q, i) => {
-      if (i !== activeQuestion) return q;
-      const options = [...q.options];
-      options[index] = value;
-      return { ...q, options };
-    }));
-    setSaved(false);
-  };
-
-  const createQuiz = () => {
-    if (!creator.trim()) {
-      alert('Please add your name or nickname first.');
-      return;
-    }
-    const valid = questions.every(q => q.correct !== null);
-    if (!valid) {
-      alert('Choose one answer for all 10 questions before generating your quiz.');
-      return;
-    }
-
-    const quiz = {
-      id: (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`).replace(/-/g, '').slice(0, 8).toUpperCase(),
-      creator: creator.trim(),
-      title: title.trim() || 'How well do you know me?',
-      category,
-      questions,
-      createdAt: new Date().toISOString()
-    };
-
-    try { localStorage.setItem('knowmebro-draft', JSON.stringify(quiz)); } catch {}
-    setSaved(true);
-    onDone(quiz);
-  };
-
-  return (
-    <main className="builder-page">
-      <div className="builder-top">
-        <button className="back-btn" onClick={onBack} type="button"><Icon name="back" size={18} /> Back</button>
-        <div className="builder-status">
-          <span>{filledCount}/10 complete</span>
-          <div className="mini-progress"><span style={{ width: `${filledCount * 10}%` }} /></div>
-        </div>
-      </div>
-
-      <div className="builder-layout">
-        <aside className="question-nav">
-          <div className="builder-intro">
-            <span className="eyebrow">Phase 1</span>
-            <h2>Choose your answers</h2>
-            <p>We give you the questions and options. Pick the answer that is true about you.</p>
-          </div>
-
-          <div className="question-list">
-            {questions.map((q, index) => (
-              <button
-                type="button"
-                key={index}
-                className={`question-nav-item ${index === activeQuestion ? 'active' : ''} ${q.question.trim() ? 'filled' : ''}`}
-                onClick={() => setActiveQuestion(index)}
-              >
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <span className="question-nav-text">{q.question.trim() || 'Untitled question'}</span>
-                {q.question.trim() && <Icon name="check" size={15} />}
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        <section className="builder-main">
-          <div className="builder-card">
-            <div className="builder-card-header">
-              <div>
-                <span className="question-kicker">QUIZ DETAILS</span>
-                <h1>Set up your challenge</h1>
-              </div>
-              <span className="builder-badge"><Icon name="spark" size={14} /> {category}</span>
-            </div>
-
-            <div className="details-grid">
-              <label className="field">
-                <span>Your name / nickname</span>
-                <input value={creator} onChange={e => setCreator(e.target.value)} placeholder="e.g. Ayush" maxLength={30} />
-              </label>
-              <label className="field">
-                <span>Quiz title</span>
-                <input value={title} onChange={e => setTitle(e.target.value)} maxLength={50} />
-              </label>
-            </div>
-
-            <label className="field category-field">
-              <span>Question vibe</span>
-              <select value={category} onChange={e => setCategory(e.target.value)}>
-                {CATEGORIES.map(item => <option key={item}>{item}</option>)}
-              </select>
-            </label>
-          </div>
-
-          <div className="builder-card question-editor">
-            <div className="question-editor-top">
-              <div>
-                <span className="question-kicker">QUESTION {String(activeQuestion + 1).padStart(2, '0')}</span>
-                <h2>Pick the answer that describes you</h2>
-              </div>
-              <span className="question-counter">{activeQuestion + 1} / 10</span>
-            </div>
-
-            <div className="predefined-question">
-              <span className="question-kicker">PREDEFINED QUESTION</span>
-              <h2>{current.question}</h2>
-              <p>Choose the option that is true about you.</p>
-            </div>
-
-            <div className="options-label">
-              <span>Your answer</span>
-              <small>Pick exactly one</small>
-            </div>
-
-            <div className="options-editor">
-              {current.options.map((option, index) => (
-                <button
-                  type="button"
-                  className={`answer-row answer-choice ${current.correct === index ? 'correct' : ''}`}
-                  key={option}
-                  onClick={() => updateQuestion('correct', index)}
-                  aria-pressed={current.correct === index}
-                >
-                  <span className="correct-radio">
-                    {current.correct === index && <span />}
-                  </span>
-                  <span className="answer-letter">{String.fromCharCode(65 + index)}</span>
-                  <span className="answer-choice-text">{option}</span>
-                  {current.correct === index && <span className="correct-label">Your answer</span>}
-                </button>
-              ))}
-            </div>
-
-            <div className="editor-footer">
-              <button
-                type="button"
-                className="secondary-btn"
-                disabled={activeQuestion === 0}
-                onClick={() => setActiveQuestion(q => Math.max(0, q - 1))}
-              >
-                <Icon name="back" size={16} /> Previous
-              </button>
-
-              {activeQuestion < 9 ? (
-                <button type="button" className="primary-btn" onClick={() => setActiveQuestion(q => Math.min(9, q + 1))}>
-                  Save & next <Icon name="arrow" size={17} />
-                </button>
-              ) : (
-                <button type="button" className="primary-btn" onClick={createQuiz}>
-                  Generate my quiz <Icon name="spark" size={17} />
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="builder-tip">
-            <Icon name="spark" size={18} />
-            <div><strong>No typing needed.</strong> KnowMeBro gives you 10 ready-made questions with 4 options each. Just choose your answer, then share the quiz.</div>
-          </div>
-
-          {saved && <div className="save-note"><Icon name="check" size={17} /> Your quiz is saved in this browser.</div>}
-        </section>
-      </div>
-    </main>
-  );
+function Results({code,onHome}){
+ const [data,setData]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+ useEffect(()=>{const token=localStorage.getItem('knowmebro-owner-'+code);if(!token){setError('Creator access is not available on this browser. Create the quiz again here to regain access.');setLoading(false);return}rpc('get_results',{p_code:code,p_token:token}).then(setData).catch(e=>setError(e.message)).finally(()=>setLoading(false))},[code]);
+ if(loading)return <main className="state-page"><div className="loading-orb"/><h1>Loading results...</h1></main>;
+ if(error)return <main className="state-page"><div className="error-emoji">🔐</div><h1>Creator access needed</h1><p>{error}</p><button className="primary-btn" onClick={onHome}>Go home</button></main>;
+ const attempts=data.attempts||[]; const avg=attempts.length?(attempts.reduce((s,a)=>s+a.score,0)/attempts.length).toFixed(1):'—';
+ return <main className="results-page"><div className="results-head"><div><span className="eyebrow">Creator dashboard</span><h1>{data.quiz.title}</h1><p>Challenge #{data.quiz.share_code} • Average score: <strong>{avg}/10</strong></p></div><button className="secondary-btn" onClick={onHome}>← Home</button></div><div className="result-metrics"><div><strong>{attempts.length}</strong><span>Friends played</span></div><div><strong>{avg}</strong><span>Average score</span></div><div><strong>{attempts.filter(a=>a.score===10).length}</strong><span>Perfect scores</span></div></div><section className="leaderboard"><div className="leaderboard-head"><h2>Who actually knows you?</h2><span>{attempts.length} attempts</span></div>{attempts.length===0?<div className="empty-results"><span>👀</span><h3>No one has played yet</h3><p>Copy your challenge link and send it to a friend.</p></div>:attempts.map((a,i)=><article className="result-row" key={a.id}><span className="rank">{i+1}</span><div className="result-avatar">{a.friend_name.slice(0,1).toUpperCase()}</div><div className="result-person"><strong>{a.friend_name}</strong><small>{new Date(a.created_at).toLocaleString()}</small></div><div className="result-score"><strong>{a.score}/10</strong><span>{a.score===10?'Perfect!':a.score>=7?'Real one':'Needs revision 😭'}</span></div></article>)}</section></main>;
 }
 
-function QuizCreated({ quiz, onHome, onEdit }) {
-  const shareUrl = `${window.location.origin}/?quiz=${quiz.id}`;
+function Preview({onBack}){return <FriendQuiz code="DEMO" onHome={onBack}/>}
 
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      alert('Quiz link copied!');
-    } catch {
-      window.prompt('Copy your quiz link:', shareUrl);
-    }
-  };
-
-  return (
-    <main className="created-page">
-      <div className="success-orb"><Icon name="check" size={34} /></div>
-      <span className="eyebrow">Quiz created</span>
-      <h1>Your challenge is ready, <span>{quiz.creator}</span>.</h1>
-      <p className="created-subtitle">Phase 1 is alive. Your quiz is saved locally and has a unique challenge ID.</p>
-
-      <div className="share-card">
-        <div className="share-card-head">
-          <div>
-            <span className="tiny-label">YOUR CHALLENGE</span>
-            <h2>{quiz.title}</h2>
-          </div>
-          <span className="quiz-id">#{quiz.id}</span>
-        </div>
-
-        <div className="share-link-box">
-          <Icon name="link" size={18} />
-          <span>{shareUrl}</span>
-        </div>
-
-        <div className="share-actions">
-          <button className="primary-btn" type="button" onClick={copyLink}><Icon name="link" size={17} /> Copy link</button>
-          <button className="secondary-btn" type="button" onClick={onEdit}><Icon name="back" size={16} /> Edit quiz</button>
-        </div>
-
-        <div className="phase-note">
-          <Icon name="spark" size={18} />
-          <span><strong>Next:</strong> Phase 2 will connect this link to a real database so friends can take the quiz from any device.</span>
-        </div>
-      </div>
-
-      <div className="created-stats">
-        <div><strong>10</strong><span>Questions</span></div>
-        <div><strong>4</strong><span>Answers each</span></div>
-        <div><strong>1</strong><span>Shareable ID</span></div>
-      </div>
-
-      <button className="text-btn" type="button" onClick={onHome}>← Back to home</button>
-    </main>
-  );
-}
-
-function Preview({ onBack }) {
-  const [selected, setSelected] = useState(null);
-  const question = SAMPLE_QUIZ.questions[0];
-
-  return (
-    <main className="preview-page">
-      <div className="preview-shell">
-        <button className="back-btn" onClick={onBack} type="button"><Icon name="back" size={18} /> Back</button>
-        <div className="preview-breadcrumb">FRIEND CHALLENGE <span>•</span> 01 / 10</div>
-
-        <div className="friend-card">
-          <div className="friend-card-top">
-            <div>
-              <span className="tiny-label">A QUIZ BY YOUR FRIEND</span>
-              <h1>{SAMPLE_QUIZ.title}</h1>
-            </div>
-            <div className="friend-avatar">Y</div>
-          </div>
-
-          <div className="big-progress"><span style={{ width: '10%' }} /></div>
-          <p className="friend-question">{question.question}</p>
-
-          <div className="friend-options">
-            {question.options.map((option, i) => (
-              <button
-                type="button"
-                className={`friend-option ${selected === i ? 'selected' : ''}`}
-                onClick={() => setSelected(i)}
-                key={option}
-              >
-                <span>{String.fromCharCode(65 + i)}</span>
-                {option}
-                {selected === i && <Icon name="check" size={18} />}
-              </button>
-            ))}
-          </div>
-
-          <button className="primary-btn full" disabled={selected === null} type="button">
-            Next question <Icon name="arrow" size={17} />
-          </button>
-
-          <p className="preview-disclaimer">This is a Phase 1 preview. Real friend responses arrive in Phase 2.</p>
-        </div>
-      </div>
-    </main>
-  );
-}
-
-export default function App() {
-  const [theme, setTheme] = useState(() => { try { return localStorage.getItem('knowmebro-theme') || 'light'; } catch { return 'light'; } });
-  const [screen, setScreen] = useState('home');
-  const [createdQuiz, setCreatedQuiz] = useState(null);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    try { localStorage.setItem('knowmebro-theme', theme); } catch {}
-  }, [theme]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('quiz')) {
-      let saved = null; try { saved = localStorage.getItem('knowmebro-draft'); } catch {}
-      if (saved) {
-        try {
-          const quiz = JSON.parse(saved);
-          if (quiz.id === params.get('quiz')) {
-            setCreatedQuiz(quiz);
-            setScreen('created');
-          }
-        } catch {
-          // Ignore malformed local draft.
-        }
-      }
-    }
-  }, []);
-
-  const page = useMemo(() => {
-    if (screen === 'builder') {
-      return <QuizBuilder onBack={() => setScreen('home')} onDone={(quiz) => { setCreatedQuiz(quiz); setScreen('created'); }} />;
-    }
-    if (screen === 'created' && createdQuiz) {
-      return <QuizCreated quiz={createdQuiz} onHome={() => setScreen('home')} onEdit={() => setScreen('builder')} />;
-    }
-    if (screen === 'preview') {
-      return <Preview onBack={() => setScreen('home')} />;
-    }
-    return <Landing onCreate={() => setScreen('builder')} onPreview={() => setScreen('preview')} />;
-  }, [screen, createdQuiz]);
-
-  return (
-    <div className="app">
-      <Header theme={theme} setTheme={setTheme} onHome={() => setScreen('home')} />
-      {page}
-    </div>
-  );
+export default function App(){
+ const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('knowmebro-theme')||'light'}catch{return'light'}});
+ const [screen,setScreen]=useState('home'),[created,setCreated]=useState(null),[code,setCode]=useState('');
+ useEffect(()=>{document.documentElement.dataset.theme=theme;try{localStorage.setItem('knowmebro-theme',theme)}catch{}},[theme]);
+ useEffect(()=>{const p=new URLSearchParams(window.location.search);const c=p.get('quiz');if(c){setCode(c.toUpperCase());setScreen(p.get('results')==='1'?'results':'friend')}},[]);
+ const home=()=>{window.history.replaceState({},'',window.location.pathname);setCode('');setScreen('home')};
+ const page=useMemo(()=>{if(screen==='builder')return <QuizBuilder onBack={home} onDone={q=>{setCreated(q);setCode(q.share_code);setScreen('created')}}/>;if(screen==='created'&&created)return <Created quiz={created} onHome={home} onResults={()=>setScreen('results')}/>;if(screen==='friend'&&code)return <FriendQuiz code={code} onHome={home}/>;if(screen==='results'&&code)return <Results code={code} onHome={home}/>;return <Landing onCreate={()=>setScreen('builder')}/>},[screen,created,code]);
+ return <div className="app"><Header theme={theme} setTheme={setTheme} onHome={home}/>{page}</div>;
 }
