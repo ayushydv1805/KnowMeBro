@@ -657,3 +657,17 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opa
  .leaderboard-tools select{width:100%}
  .elapsed-pill{font-size:9px}
 }
+
+/* Phase 9 — score cards, focus mode and visual navigation */
+.friend-tools{display:flex;align-items:center;gap:7px}
+.focus-mode{box-shadow:0 30px 90px rgba(139,124,255,.16);border-color:rgba(139,124,255,.35)}
+.focus-mode .friend-image{height:390px}
+.visual-strip{display:flex;gap:6px;overflow-x:auto;padding:0 0 4px;margin:-9px 0 14px}
+.visual-strip button{flex:0 0 54px;width:54px;height:38px;padding:2px;border:1px solid var(--border);background:var(--surface-2);border-radius:8px;cursor:pointer;opacity:.7;overflow:hidden}
+.visual-strip button.active{opacity:1;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.visual-strip img{width:100%;height:100%;object-fit:cover;border-radius:5px;display:block}
+@media(max-width:650px){
+ .friend-tools{gap:4px}.friend-tools .ghost-mini{padding:6px 7px;font-size:9px}
+ .focus-mode .friend-image{height:270px}
+ .visual-strip button{flex-basis:45px;width:45px;height:33px}
+}
