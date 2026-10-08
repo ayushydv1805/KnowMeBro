@@ -671,3 +671,8 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opa
  .focus-mode .friend-image{height:270px}
  .visual-strip button{flex-basis:45px;width:45px;height:33px}
 }
+
+/* Phase 10 — pace + leaderboard share card */
+.pace-pill{padding:6px 9px;border:1px solid var(--border);border-radius:999px;background:var(--surface-2);font-size:10px;font-weight:800;color:var(--muted)}
+.friend-tools{flex-wrap:wrap}
+@media(max-width:650px){.pace-pill{font-size:9px;padding:6px 7px}}
