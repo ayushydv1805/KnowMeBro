@@ -143,7 +143,7 @@ function Landing({ onCreate, onPreview }) {
         </div>
         <div className="steps">
           {[
-            ['01', 'Build your quiz', 'Write 10 things your friends should know about you.'],
+            ['01', 'Build your quiz', 'Choose the answers that your friends should know about you.'],
             ['02', 'Share your challenge', 'Send one simple link to your friends anywhere.'],
             ['03', 'See who knows you', 'Compare scores and find your real ones.']
           ].map(([number, title, text]) => (
