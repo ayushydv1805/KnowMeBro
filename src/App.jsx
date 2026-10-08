@@ -109,7 +109,7 @@ function Landing({ onCreate, onPreview }) {
           </div>
         </div>
 
-        <div className="hero-card-wrap" aria-hidden="true">
+        <div className="hero-card-wrap" aria-hidden="true"><div className="hero-art"><img src="/friendship-hero.svg" alt="" /></div>
           <div className="floating-pill pill-top">🔥 Who knows you best?</div>
           <div className="quiz-preview-card">
             <div className="preview-header">
@@ -148,7 +148,7 @@ function Landing({ onCreate, onPreview }) {
             ['03', 'See who knows you', 'Compare scores and find your real ones.']
           ].map(([number, title, text]) => (
             <article className="step-card" key={number}>
-              <span className="step-number">{number}</span>
+              <div className="step-visual"><img src={number === "01" ? "/step-build.svg" : number === "02" ? "/step-share.svg" : "/step-score.svg"} alt="" /></div><span className="step-number">{number}</span>
               <h3>{title}</h3>
               <p>{text}</p>
             </article>
