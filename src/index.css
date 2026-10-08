@@ -686,3 +686,12 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opa
 .confidence-box button.selected{color:var(--text);border-color:var(--accent);background:var(--accent-soft);box-shadow:0 5px 18px rgba(139,124,255,.1)}
 .review-confidence{color:var(--accent)!important;margin-top:4px!important;font-size:9px!important}
 @media(max-width:650px){.confidence-box>div{grid-template-columns:1fr}.confidence-box button{text-align:left;padding:8px 10px}}
+
+/* Phase 12 — make it yours */
+.builder-mode-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 12px}
+.custom-editor{padding:16px;border:1px solid var(--border);border-radius:18px;background:var(--surface-2);margin-bottom:16px}
+.custom-editor .field{margin-bottom:12px}
+.custom-editor .field:last-of-type{margin-bottom:0}
+.custom-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.custom-help{margin:10px 0 0;color:var(--muted);font-size:10px;line-height:1.5}
+@media(max-width:650px){.builder-mode-row{align-items:flex-start}.custom-options{grid-template-columns:1fr}.custom-editor{padding:12px}}
