@@ -676,3 +676,13 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opa
 .pace-pill{padding:6px 9px;border:1px solid var(--border);border-radius:999px;background:var(--surface-2);font-size:10px;font-weight:800;color:var(--muted)}
 .friend-tools{flex-wrap:wrap}
 @media(max-width:650px){.pace-pill{font-size:9px;padding:6px 7px}}
+
+/* Phase 11 — confidence layer */
+.confidence-box{margin:-5px 0 18px;padding:13px 14px;border:1px solid var(--border);border-radius:16px;background:var(--surface-2)}
+.confidence-box>span{display:block;font-size:10px;font-weight:800;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+.confidence-box>div{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.confidence-box button{border:1px solid var(--border);background:var(--surface-solid);color:var(--muted);border-radius:10px;padding:9px 7px;font-size:11px;font-weight:700;cursor:pointer;transition:.18s}
+.confidence-box button:hover{transform:translateY(-1px);border-color:var(--border-strong)}
+.confidence-box button.selected{color:var(--text);border-color:var(--accent);background:var(--accent-soft);box-shadow:0 5px 18px rgba(139,124,255,.1)}
+.review-confidence{color:var(--accent)!important;margin-top:4px!important;font-size:9px!important}
+@media(max-width:650px){.confidence-box>div{grid-template-columns:1fr}.confidence-box button{text-align:left;padding:8px 10px}}
