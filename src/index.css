@@ -582,3 +582,16 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opa
 .review-image-button{border:0;padding:0;background:transparent;cursor:zoom-in}
 .review-image-button img{display:block}
 @media(max-width:650px){.friend-meta{font-size:10px}.analytics-grid{grid-template-columns:1fr}.analytics-wide{grid-column:auto}.score-bars{gap:6px}.score-bar>div{height:70px}.image-lightbox{padding:10px}.image-lightbox-card{border-radius:18px}.image-lightbox-caption{display:block}.image-lightbox-caption strong{display:block;text-align:left;margin-top:6px}.image-lightbox-card img{max-height:72vh}}
+
+
+/* Phase 6 */
+.keyboard-hint{text-align:center;color:var(--muted);font-size:10px;margin:-12px 0 10px;opacity:.8}
+.question-dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:0 0 14px}
+.question-dots button{width:25px;height:25px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--muted);font-size:9px;font-weight:800;cursor:pointer;transition:.18s}
+.question-dots button:hover{transform:translateY(-1px);border-color:var(--border-strong)}
+.question-dots button.answered{color:var(--text);border-color:rgba(34,197,94,.35)}
+.question-dots button.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 5px 18px rgba(102,87,244,.25)}
+.celebration-actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+.live-dot{color:#22c55e;font-weight:900;font-size:10px}
+.live-refresh{padding:7px 10px;border-radius:999px;background:rgba(34,197,94,.09);color:#16a34a!important;font-size:10px!important;font-weight:800}
+@media(max-width:650px){.keyboard-hint{display:none}.question-dots{gap:4px}.question-dots button{width:23px;height:23px}.celebration-actions{flex-direction:column}.celebration-actions>*{width:100%}}
