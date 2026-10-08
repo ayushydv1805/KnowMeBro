@@ -197,7 +197,7 @@ function QuizBuilder({ onBack, onDone }) {
     }
 
     const quiz = {
-      id: crypto.randomUUID().slice(0, 8).toUpperCase(),
+      id: (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`).replace(/-/g, '').slice(0, 8).toUpperCase(),
       creator: creator.trim(),
       title: title.trim() || 'How well do you know me?',
       category,
@@ -205,7 +205,7 @@ function QuizBuilder({ onBack, onDone }) {
       createdAt: new Date().toISOString()
     };
 
-    localStorage.setItem('knowmebro-draft', JSON.stringify(quiz));
+    try { localStorage.setItem('knowmebro-draft', JSON.stringify(quiz)); } catch {}
     setSaved(true);
     onDone(quiz);
   };
@@ -459,19 +459,19 @@ function Preview({ onBack }) {
 }
 
 export default function App() {
-  const [theme, setTheme] = useState(() => localStorage.getItem('knowmebro-theme') || 'light');
+  const [theme, setTheme] = useState(() => { try { return localStorage.getItem('knowmebro-theme') || 'light'; } catch { return 'light'; } });
   const [screen, setScreen] = useState('home');
   const [createdQuiz, setCreatedQuiz] = useState(null);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem('knowmebro-theme', theme);
+    try { localStorage.setItem('knowmebro-theme', theme); } catch {}
   }, [theme]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('quiz')) {
-      const saved = localStorage.getItem('knowmebro-draft');
+      let saved = null; try { saved = localStorage.getItem('knowmebro-draft'); } catch {}
       if (saved) {
         try {
           const quiz = JSON.parse(saved);
