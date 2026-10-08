@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 const STARTER_QUESTIONS = [
-  { question: '', options: ['', '', '', ''], correct: 0 },
-  { question: '', options: ['', '', '', ''], correct: 0 },
-  { question: '', options: ['', '', '', ''], correct: 0 },
-  { question: '', options: ['', '', '', ''], correct: 0 },
-  { question: '', options: ['', '', '', ''], correct: 0 },
-  { question: '', options: ['', '', '', ''], correct: 0 },
-  { question: '', options: ['', '', '', ''], correct: 0 },
-  { question: '', options: ['', '', '', ''], correct: 0 },
-  { question: '', options: ['', '', '', ''], correct: 0 },
-  { question: '', options: ['', '', '', ''], correct: 0 }
+  { question: 'What is my favourite food?', options: ['Pizza', 'Biryani', 'Burger', 'Momos'], correct: null },
+  { question: 'What would I choose for a perfect weekend?', options: ['Road trip', 'Gaming at home', 'Movie marathon', 'Sleeping all day'], correct: null },
+  { question: 'What kind of music do I enjoy the most?', options: ['Punjabi', 'Haryanvi', 'Bollywood', 'English'], correct: null },
+  { question: 'What is my ideal travel plan?', options: ['Mountains', 'Beach', 'Big city', 'Village getaway'], correct: null },
+  { question: 'What do I usually do when I am bored?', options: ['Listen to music', 'Play games', 'Scroll social media', 'Call a friend'], correct: null },
+  { question: 'Which describes my personality best?', options: ['Chill', 'Funny', 'Adventurous', 'Quiet'], correct: null },
+  { question: 'What type of movies do I prefer?', options: ['Comedy', 'Thriller', 'Horror', 'Romance'], correct: null },
+  { question: 'What would I rather do with friends?', options: ['Hang out outside', 'Play games', 'Watch a movie', 'Just talk'], correct: null },
+  { question: 'When am I usually more active?', options: ['Early morning', 'Afternoon', 'Evening', 'Late night'], correct: null },
+  { question: 'What matters most to me in a friendship?', options: ['Trust', 'Humour', 'Loyalty', 'Shared interests'], correct: null }
 ];
 
 const CATEGORIES = ['Favorites', 'Personality', 'Memories', 'Random', 'This or That'];
@@ -168,7 +168,7 @@ function QuizBuilder({ onBack, onDone }) {
   const [saved, setSaved] = useState(false);
 
   const current = questions[activeQuestion];
-  const filledCount = questions.filter(q => q.question.trim() && q.options.every(o => o.trim())).length;
+  const filledCount = questions.filter(q => q.correct !== null).length;
 
   const updateQuestion = (field, value) => {
     setQuestions(prev => prev.map((q, i) => i === activeQuestion ? { ...q, [field]: value } : q));
@@ -190,9 +190,9 @@ function QuizBuilder({ onBack, onDone }) {
       alert('Please add your name or nickname first.');
       return;
     }
-    const valid = questions.every(q => q.question.trim() && q.options.every(o => o.trim()));
+    const valid = questions.every(q => q.correct !== null);
     if (!valid) {
-      alert('Fill all 10 questions and their 4 options before generating your quiz.');
+      alert('Choose one answer for all 10 questions before generating your quiz.');
       return;
     }
 
@@ -224,8 +224,8 @@ function QuizBuilder({ onBack, onDone }) {
         <aside className="question-nav">
           <div className="builder-intro">
             <span className="eyebrow">Phase 1</span>
-            <h2>Build your quiz</h2>
-            <p>Make it personal. Make it impossible for your friends to guess.</p>
+            <h2>Choose your answers</h2>
+            <p>We give you the questions and options. Pick the answer that is true about you.</p>
           </div>
 
           <div className="question-list">
@@ -277,47 +277,38 @@ function QuizBuilder({ onBack, onDone }) {
             <div className="question-editor-top">
               <div>
                 <span className="question-kicker">QUESTION {String(activeQuestion + 1).padStart(2, '0')}</span>
-                <h2>What should your friend know?</h2>
+                <h2>Pick the answer that describes you</h2>
               </div>
               <span className="question-counter">{activeQuestion + 1} / 10</span>
             </div>
 
-            <label className="field">
-              <span>Question</span>
-              <textarea
-                value={current.question}
-                onChange={e => updateQuestion('question', e.target.value)}
-                placeholder="e.g. What is my go-to comfort food?"
-                rows={3}
-                maxLength={120}
-              />
-            </label>
+            <div className="predefined-question">
+              <span className="question-kicker">PREDEFINED QUESTION</span>
+              <h2>{current.question}</h2>
+              <p>Choose the option that is true about you.</p>
+            </div>
 
             <div className="options-label">
-              <span>Answer options</span>
-              <small>Select the correct answer</small>
+              <span>Your answer</span>
+              <small>Pick exactly one</small>
             </div>
 
             <div className="options-editor">
               {current.options.map((option, index) => (
-                <div className={`answer-row ${current.correct === index ? 'correct' : ''}`} key={index}>
-                  <button
-                    type="button"
-                    className="correct-radio"
-                    onClick={() => updateQuestion('correct', index)}
-                    aria-label={`Mark option ${index + 1} as correct`}
-                  >
+                <button
+                  type="button"
+                  className={`answer-row answer-choice ${current.correct === index ? 'correct' : ''}`}
+                  key={option}
+                  onClick={() => updateQuestion('correct', index)}
+                  aria-pressed={current.correct === index}
+                >
+                  <span className="correct-radio">
                     {current.correct === index && <span />}
-                  </button>
+                  </span>
                   <span className="answer-letter">{String.fromCharCode(65 + index)}</span>
-                  <input
-                    value={option}
-                    onChange={e => updateOption(index, e.target.value)}
-                    placeholder={`Option ${String.fromCharCode(65 + index)}`}
-                    maxLength={70}
-                  />
-                  {current.correct === index && <span className="correct-label">Correct</span>}
-                </div>
+                  <span className="answer-choice-text">{option}</span>
+                  {current.correct === index && <span className="correct-label">Your answer</span>}
+                </button>
               ))}
             </div>
 
@@ -345,10 +336,10 @@ function QuizBuilder({ onBack, onDone }) {
 
           <div className="builder-tip">
             <Icon name="spark" size={18} />
-            <div><strong>Make it hard to Google.</strong> Ask things only a real friend would know — your weird habits, favorite things, inside jokes and memories.</div>
+            <div><strong>No typing needed.</strong> KnowMeBro gives you 10 ready-made questions with 4 options each. Just choose your answer, then share the quiz.</div>
           </div>
 
-          {saved && <div className="save-note"><Icon name="check" size={17} /> Your quiz draft is saved in this browser.</div>}
+          {saved && <div className="save-note"><Icon name="check" size={17} /> Your quiz is saved in this browser.</div>}
         </section>
       </div>
     </main>
