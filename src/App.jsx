@@ -137,7 +137,7 @@ function FriendQuiz({code,onHome}){
 
  useEffect(()=>{
    if(!quiz||result||!started||showReview||picked!==undefined)return;
-   const timer=setInterval(()=>setSeconds(s=>Math.max(0,s-1)),1000);
+   const timer=setInterval(()=>setSeconds(s=>{if(s<=1){clearInterval(timer);return 0;}return s-1;}),1000);
    return()=>clearInterval(timer);
  },[active,picked,quiz,result,started,showReview]);
 
