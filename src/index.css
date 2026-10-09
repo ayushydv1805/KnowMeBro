@@ -769,3 +769,10 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opa
 .question-management{row-gap:8px}
 @media(max-width:560px){.template-library{padding:11px}.template-library-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.template-library-grid img{height:82px}.builder-image-preview>span{right:8px;bottom:8px;padding:6px 9px}}
 @media(prefers-reduced-motion:reduce){.template-library-grid button{transition:none}}
+
+
+/* Phase 19 — durable local drafts and image resilience */
+.draft-autosave{display:inline-flex;align-items:center;gap:6px;margin-left:auto;color:var(--muted);font-size:11px;font-weight:800;white-space:nowrap}
+.draft-autosave[role="status"]{padding:7px 10px;border:1px solid var(--border);border-radius:999px;background:var(--surface)}
+.question-image-button img,.builder-image-preview img,.visual-strip img,.photo-presets img,.template-library-grid img{background:linear-gradient(135deg,#dbeafe,#ede9fe 52%,#fce7f3)}
+@media(max-width:560px){.draft-autosave{font-size:10px;margin:8px 0 0 auto;white-space:normal;text-align:right;max-width:170px}}
