@@ -110,7 +110,7 @@ function FriendQuiz({code,onHome}){
    q.questions?.forEach(item=>{const img=new Image();img.src=item.image});
    try{
      const saved=JSON.parse(localStorage.getItem('knowmebro-progress-'+code)||'null');
-     if(saved?.answers){setAnswers(saved.answers);setConfidence(saved.confidence||[]);setName(saved.name||'');setActive(Math.min(saved.active||0,(q.questions?.length||1)-1));setStarted(saved.started!==false);setStartedAt(saved.startedAt||Date.now())}
+     if(saved&&Array.isArray(saved.answers)){const total=q.questions?.length||0;setAnswers(Array.from({length:total},(_,i)=>Number.isInteger(saved.answers[i])&&saved.answers[i]>=0&&saved.answers[i]<4?saved.answers[i]:undefined));setConfidence(Array.from({length:total},(_,i)=>Array.isArray(saved.confidence)&&[0,1,2].includes(saved.confidence[i])?saved.confidence[i]:undefined));setName(typeof saved.name==='string'?saved.name.slice(0,30):'');setActive(Math.max(0,Math.min(Number.isInteger(saved.active)?saved.active:0,total-1)));setStarted(saved.started!==false);setStartedAt(Number.isFinite(saved.startedAt)?saved.startedAt:Date.now())}
    }catch{}
  }).catch(e=>setError(e.message)).finally(()=>setLoading(false))},[code]);
 
