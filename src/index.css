@@ -695,3 +695,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opa
 .custom-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .custom-help{margin:10px 0 0;color:var(--muted);font-size:10px;line-height:1.5}
 @media(max-width:650px){.builder-mode-row{align-items:flex-start}.custom-options{grid-template-columns:1fr}.custom-editor{padding:12px}}
+
+/* Phase 13 — own-photo uploads */
+.upload-image-field input[type="file"]{display:block;width:100%;box-sizing:border-box;padding:10px;border:1px dashed var(--border-strong);border-radius:12px;background:var(--surface-solid);color:var(--text);font-size:11px}
+.upload-image-field small{display:block;margin-top:7px;color:var(--muted);font-size:10px;line-height:1.45}
