@@ -709,3 +709,21 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opa
 .confidence-insight-row b{color:var(--text);text-align:right}
 .confidence-insight-row small{text-align:right;font-size:9px}
 @media(max-width:650px){.confidence-insight-row{grid-template-columns:minmax(85px,1fr) minmax(55px,.8fr) 34px 45px;gap:6px;font-size:9px}}
+
+
+/* Phase 15 — secret clues and curated real-photo picker */
+.photo-presets{display:grid;gap:9px;padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--surface)}
+.photo-presets>div{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.photo-presets button{min-width:0;overflow:hidden;padding:0 0 8px;border:1px solid var(--border);border-radius:11px;background:var(--surface-solid);color:var(--text);cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
+.photo-presets button:hover{transform:translateY(-2px)}
+.photo-presets button.selected{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 24%,transparent)}
+.photo-presets img{display:block;width:100%;height:58px;object-fit:cover}
+.photo-presets button span{display:block;padding:7px 3px 0;font-size:10px;font-weight:800}
+.question-hint-wrap{margin:12px 0 16px}
+.hint-reveal-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;border:1px dashed var(--border-strong);border-radius:12px;background:var(--surface);color:var(--text);font:inherit;font-size:12px;font-weight:800;cursor:pointer;transition:background .18s,border-color .18s}
+.hint-reveal-btn:hover{background:var(--surface-2);border-color:var(--accent)}
+.question-hint{display:grid;gap:5px;padding:13px 15px;border:1px solid color-mix(in srgb,var(--accent) 38%,var(--border));border-radius:12px;background:color-mix(in srgb,var(--accent) 8%,var(--surface));animation:hint-pop .22s ease-out}
+.question-hint strong{font-size:11px;color:var(--accent)}
+.question-hint span{font-size:12px;line-height:1.55;color:var(--text)}
+@keyframes hint-pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:700px){.photo-presets>div{grid-template-columns:repeat(3,minmax(0,1fr))}.photo-presets img{height:70px}}
