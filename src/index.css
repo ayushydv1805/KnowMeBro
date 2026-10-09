@@ -749,3 +749,23 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opa
 .question-management .remove-question-btn{color:#dc5666;border-color:color-mix(in srgb,#dc5666 35%,var(--border))}
 .question-management .remove-question-btn:hover:not(:disabled){background:color-mix(in srgb,#dc5666 8%,var(--surface))}
 @media(max-width:560px){.question-management{gap:6px}.question-management .secondary-btn{flex:1 1 auto;padding:8px 7px;font-size:10px}.question-management>span{flex-basis:100%;margin:3px 0 0;text-align:right}}
+
+
+/* Phase 18 — visual question library, reorder controls, and photo preview */
+.builder-image-preview{display:block;position:relative;width:100%;padding:0;border:0;border-radius:20px;overflow:hidden;background:transparent;text-align:left;cursor:zoom-in}
+.builder-image-preview .question-real-image{display:block;width:100%}
+.builder-image-preview>span{position:absolute;right:12px;bottom:12px;padding:8px 11px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:rgba(10,14,28,.76);color:#fff;font-size:11px;font-weight:800;backdrop-filter:blur(10px)}
+.builder-image-preview:focus-visible{outline:3px solid #8b7cff;outline-offset:3px}
+.template-library{margin:18px 0 6px;padding:15px;border:1px solid var(--border);border-radius:17px;background:var(--surface-2);display:grid;gap:12px}
+.template-library>div:first-child{display:grid;gap:5px}
+.template-library>div:first-child small{font-size:11px;line-height:1.5;color:var(--muted)}
+.template-library-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.template-library-grid button{position:relative;min-width:0;overflow:hidden;padding:0;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);text-align:left;cursor:pointer;transition:transform .18s ease,border-color .18s ease}
+.template-library-grid button:hover:not(:disabled){transform:translateY(-2px);border-color:#8b7cff}
+.template-library-grid button:disabled{opacity:.4;cursor:not-allowed}
+.template-library-grid img{display:block;width:100%;height:74px;object-fit:cover}
+.template-library-grid button span{display:block;padding:8px 7px;font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.template-library-grid button:focus-visible{outline:3px solid #8b7cff;outline-offset:2px}
+.question-management{row-gap:8px}
+@media(max-width:560px){.template-library{padding:11px}.template-library-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.template-library-grid img{height:82px}.builder-image-preview>span{right:8px;bottom:8px;padding:6px 9px}}
+@media(prefers-reduced-motion:reduce){.template-library-grid button{transition:none}}
