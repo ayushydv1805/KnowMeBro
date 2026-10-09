@@ -739,3 +739,13 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opa
 .custom-editor select{width:100%;border:1px solid var(--border);background:var(--surface-solid);color:var(--text);border-radius:12px;padding:12px 13px;font:inherit;font-size:12px;outline:none}
 .custom-editor select:focus{border-color:var(--accent)}
 @media(max-width:650px){.question-photo-meta{align-items:flex-start}.question-photo-caption{flex:1 1 100%}.difficulty-chip{font-size:9px}}
+
+
+/* Phase 17 — flexible quiz builder controls */
+.question-management{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 15px;padding:11px 12px;border:1px solid var(--border);border-radius:14px;background:var(--surface-2)}
+.question-management .secondary-btn{min-height:36px;padding:8px 11px;font-size:11px}
+.question-management>span{margin-left:auto;color:var(--muted);font-size:10px;font-weight:800;white-space:nowrap}
+.question-management button:disabled{opacity:.42;cursor:not-allowed;transform:none}
+.question-management .remove-question-btn{color:#dc5666;border-color:color-mix(in srgb,#dc5666 35%,var(--border))}
+.question-management .remove-question-btn:hover:not(:disabled){background:color-mix(in srgb,#dc5666 8%,var(--surface))}
+@media(max-width:560px){.question-management{gap:6px}.question-management .secondary-btn{flex:1 1 auto;padding:8px 7px;font-size:10px}.question-management>span{flex-basis:100%;margin:3px 0 0;text-align:right}}
