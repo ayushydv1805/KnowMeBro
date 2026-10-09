@@ -699,3 +699,13 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opa
 /* Phase 13 — own-photo uploads */
 .upload-image-field input[type="file"]{display:block;width:100%;box-sizing:border-box;padding:10px;border:1px dashed var(--border-strong);border-radius:12px;background:var(--surface-solid);color:var(--text);font-size:11px}
 .upload-image-field small{display:block;margin-top:7px;color:var(--muted);font-size:10px;line-height:1.45}
+
+
+/* Phase 14 — confidence calibration insights */
+.confidence-insight-list{display:grid;gap:10px;margin-top:16px}
+.confidence-insight-row{display:grid;grid-template-columns:minmax(100px,1fr) minmax(70px,1.1fr) 42px 54px;gap:9px;align-items:center;font-size:10px;color:var(--muted)}
+.confidence-insight-row>div{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.confidence-insight-row i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.confidence-insight-row b{color:var(--text);text-align:right}
+.confidence-insight-row small{text-align:right;font-size:9px}
+@media(max-width:650px){.confidence-insight-row{grid-template-columns:minmax(85px,1fr) minmax(55px,.8fr) 34px 45px;gap:6px;font-size:9px}}
