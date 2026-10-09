@@ -43,7 +43,7 @@ function QuizBuilder({onBack,onDone}){
   if(!creator.trim()) return setError('Add your name or nickname first.');
   if(filled!==10) return setError('Choose one answer for all 10 questions.');
   if(questions.some(q=>!q.question.trim()||q.options.some(o=>!o.trim()))) return setError('Every question and all four answers must be filled.');
-  if(questions.some(q=>!/^https?:\/\//i.test(q.image))) return setError('Every question needs a valid image URL starting with http:// or https://.');
+  if(questions.some(q=>!( /^https?:\\/\\//i.test(q.image) || /^data:image\\/jpeg;base64,/i.test(q.image)))) return setError('Every question needs an image URL or an uploaded photo.');
   setLoading(true); setError('');
   try{
    const cleanQuestions=questions.map(({vibe,...q})=>q);
