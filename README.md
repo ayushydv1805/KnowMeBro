@@ -1,22 +1,25 @@
 # KnowMeBro 🧠
 
-**KnowMeBro** is a friendship challenge game: create 10 questions about yourself, share the challenge, and discover who actually knows you.
+**KnowMeBro** is a shareable friendship quiz. Create a quiz about yourself, send the challenge link to friends, and compare scores on your private creator dashboard.
 
-## Phase 1
+## Features
 
-- Modern landing page
-- Quiz builder with exactly 10 questions
-- Four answer options per question
-- Correct-answer selection
-- Question navigation and progress
-- Local draft persistence
-- Unique local challenge ID
-- Share-link UI
-- Friend quiz preview
-- Responsive mobile design
-- Light / dark mode with saved preference
+- Build quizzes with **5–20 questions** and four answer choices per question.
+- Select the correct answer, customize question text, hints, captions, and difficulty.
+- Choose from a curated real-photo library, use photo shortcuts, or upload compressed images.
+- Preview the quiz as a friend before publishing.
+- Share challenge links that work across devices.
+- Resume an unfinished quiz on the same browser.
+- Review answers, confidence choices, score analytics, and the leaderboard.
+- Export results as CSV and save a leaderboard image.
+- Light and dark themes, keyboard navigation, responsive layouts, and image fallbacks.
 
-> Phase 1 uses browser localStorage for the draft. Phase 2 will add a real backend so shared quizzes and responses work across devices.
+## Tech stack
+
+- React 19
+- Vite 7
+- Supabase Postgres and RPC functions
+- Vercel and Render static hosting
 
 ## Run locally
 
@@ -25,12 +28,23 @@ npm install
 npm run dev
 ```
 
-Then open the local Vite URL shown in the terminal.
+For a production build:
 
-## Project roadmap
+```bash
+npm run build
+npm run preview
+```
 
-1. Foundation + Quiz Creation
-2. Friend Challenge + Results
-3. Competition + Social Features
-4. Advanced Friendship Modes
-5. Polish + Viral System
+The frontend uses a Supabase publishable key, which is intended for browser use. Database tables have Row Level Security enabled; app data operations go through database RPC functions.
+
+## Database migrations
+
+Database migration history is tracked in `supabase/migrations/`. The public quiz RPC intentionally returns question text, answer options, photos, hints, captions, difficulty, and vibe—but never the correct answer. The creator-only results RPC checks the creator token before returning private results.
+
+## Deployments
+
+- Production: https://knowmebro.vercel.app
+- Alternate static host: https://knowmebro.onrender.com
+- Source: https://github.com/ayushydv1805/KnowMeBro
+
+GitHub Actions runs `npm run build` on pushes and pull requests to `main`.
