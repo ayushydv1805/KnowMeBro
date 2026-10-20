@@ -28,6 +28,12 @@ npm install
 npm run dev
 ```
 
+Run the regression tests:
+
+```bash
+npm test
+```
+
 For a production build:
 
 ```bash
@@ -47,4 +53,4 @@ Database migration history is tracked in `supabase/migrations/`. The public quiz
 - Alternate static host: https://knowmebro.onrender.com
 - Source: https://github.com/ayushydv1805/KnowMeBro
 
-GitHub Actions runs `npm run build` on pushes and pull requests to `main`.
+GitHub Actions runs `npm test` and `npm run build` on pushes and pull requests to `main`.
