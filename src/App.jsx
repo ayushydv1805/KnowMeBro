@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { isValidQuizPayload, isValidSubmissionResult, isValidResultsPayload, shouldResumeProgress, scoreTier } from './quizUtils.js';
 
 const SUPABASE_URL = 'https://gnujgajomorbwpadgeay.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_9gcS-1_Ei0YFZ6iqM1xyGQ_Hz6-Ztsx';
@@ -32,9 +33,22 @@ const QUESTION_TEMPLATES=[
 ];
 
 async function rpc(name, body) {
-  const res=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},body:JSON.stringify(body)});
+  const controller=new AbortController();
+  const timeoutId=window.setTimeout(()=>controller.abort(),30000);
+  let res;
+  try {
+    res=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},body:JSON.stringify(body),signal:controller.signal});
+  } catch(error) {
+    if(error?.name==='AbortError') throw new Error('The server took too long to respond. Please try again.');
+    throw new Error('Could not connect to KnowMeBro. Check your internet connection and try again.');
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
   const data=await res.json().catch(()=>null);
-  if(!res.ok) throw new Error(data?.message||data?.hint||data?.error||'Something went wrong.');
+  if(!res.ok) {
+    if(res.status===429) throw new Error('Too many requests. Please wait a moment and try again.');
+    throw new Error(data?.message||data?.hint||data?.error||(res.status>=500?'The server is temporarily unavailable. Please try again.':'Request failed ('+res.status+'). Please try again.'));
+  }
   return data;
 }
 function Icon({name,size=20}){
@@ -78,6 +92,7 @@ function QuizBuilder({onBack,onDone}){
   try{
    const cleanQuestions=questions.map(q=>({...q,vibe:typeof q.vibe==='string'&&q.vibe.trim()?q.vibe:category}));
    const data=await rpc('create_quiz',{p_creator:creator.trim(),p_title:title.trim()||'How well do you know me?',p_category:category,p_questions:cleanQuestions});
+   if(!data||typeof data.share_code!=='string'||!data.share_code.trim()||typeof data.creator_token!=='string'||!data.creator_token.trim())throw new Error('The server did not return valid challenge access details. Your draft is still saved; please try again.');
    try{localStorage.removeItem(BUILDER_DRAFT_KEY);localStorage.setItem('knowmebro-owner-'+data.share_code,data.creator_token);}catch{}
    onDone({...data,creator:creator.trim(),title:title.trim()||'How well do you know me?',category,questions:cleanQuestions});
   }catch(e){setError(e.message)}finally{setLoading(false)}
@@ -92,11 +107,11 @@ function Created({quiz,onHome,onResults}){
  return <main className="created-page"><div className="success-orb"><Icon name="check" size={34}/></div><span className="eyebrow">Phase 23 • Published</span><h1>Your challenge is ready, <span>{quiz.creator}</span>.</h1><p className="created-subtitle">Your {questionCount}-question challenge is live. Send it to your friends and let the leaderboard do the talking.</p><div className="share-card"><div className="share-card-head"><div><span className="tiny-label">YOUR LIVE CHALLENGE</span><h2>{quiz.title}</h2></div><span className="quiz-id">#{quiz.share_code}</span></div><div className="share-link-box"><Icon name="link" size={18}/><span>{shareUrl}</span></div><div className="share-actions"><button className="primary-btn" onClick={share}><Icon name="share" size={17}/> Share challenge</button><button className="secondary-btn" onClick={copy}><Icon name="copy" size={16}/> Copy link</button><button className="secondary-btn" onClick={onResults}><Icon name="users" size={16}/> View results</button></div><div className="phase-note"><Icon name="spark" size={18}/><span><strong>Phase 23:</strong> 5–20 questions, filtered real-photo library, surprise photo picks, apply one photo across the quiz packs and custom memory photos.</span></div></div><div className="created-stats"><div><strong>{questionCount}</strong><span>Questions</span></div><div><strong>4</strong><span>Answers each</span></div><div><strong>∞</strong><span>Friend attempts</span></div></div><button className="text-btn" onClick={onHome}>← Back to home</button></main>;
 }
 
-function ScoreCardButton({result,creator,code}){const download=()=>{const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=700;const x=canvas.getContext('2d');const g=x.createLinearGradient(0,0,1200,700);g.addColorStop(0,'#0b1020');g.addColorStop(1,'#22144f');x.fillStyle=g;x.fillRect(0,0,1200,700);x.fillStyle='#ffffff';x.font='700 54px Arial';x.fillText('KNOWMEBRO',70,90);x.font='500 30px Arial';x.fillStyle='#cbd5e1';x.fillText('Challenge result',70,140);x.font='700 150px Arial';x.fillStyle='#ffffff';x.fillText(result.score+'/'+result.total,70,340);x.font='600 34px Arial';x.fillStyle='#a78bfa';x.fillText(result.score===result.total?'PERFECT FRIEND':result.score>=8?'REAL ONE':'CHALLENGE COMPLETE',75,410);x.font='500 25px Arial';x.fillStyle='#cbd5e1';x.fillText('Created by '+creator,75,485);x.font='500 22px Arial';x.fillText('Can you beat me?  •  knowmebro.vercel.app',75,590);const a=document.createElement('a');a.download='knowmebro-score-'+code+'.png';a.href=canvas.toDataURL('image/png');a.click()};return <button className="secondary-btn" onClick={download}><Icon name="download" size={17}/> Save score card</button>}
+function ScoreCardButton({result,creator,code}){const download=()=>{const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=700;const x=canvas.getContext('2d');const g=x.createLinearGradient(0,0,1200,700);g.addColorStop(0,'#0b1020');g.addColorStop(1,'#22144f');x.fillStyle=g;x.fillRect(0,0,1200,700);x.fillStyle='#ffffff';x.font='700 54px Arial';x.fillText('KNOWMEBRO',70,90);x.font='500 30px Arial';x.fillStyle='#cbd5e1';x.fillText('Challenge result',70,140);x.font='700 150px Arial';x.fillStyle='#ffffff';x.fillText(result.score+'/'+result.total,70,340);x.font='600 34px Arial';x.fillStyle='#a78bfa';const tier=scoreTier(result.score,result.total);x.fillText(tier==='perfect'?'PERFECT FRIEND':tier==='high'?'REAL ONE':tier==='medium'?'CHALLENGE COMPLETE':tier==='low'?'KEEP PRACTISING':'CHALLENGE COMPLETE',75,410);x.font='500 25px Arial';x.fillStyle='#cbd5e1';x.fillText('Created by '+creator,75,485);x.font='500 22px Arial';x.fillText('Can you beat me?  •  knowmebro.vercel.app',75,590);const a=document.createElement('a');a.download='knowmebro-score-'+code+'.png';a.href=canvas.toDataURL('image/png');a.click()};return <button className="secondary-btn" onClick={download}><Icon name="download" size={17}/> Save score card</button>}
 
 function Celebration({result,creator,onHome,code}){
- const pieces=Array.from({length:18},(_,i)=>i);
- return <main className="result-page" style={{position:'relative',overflow:'hidden'}}><div className="celebration-pieces" aria-hidden="true">{pieces.map(i=><i key={i} style={{left:(4+i*5)%96+'%',animationDelay:(i*.07)+'s'}}/> )}</div><div className="result-orb"><Icon name="check" size={40}/></div><span className="eyebrow">Challenge complete</span><h1>{result.score}/{result.total}</h1><h2>{result.score===result.total?'Bro, you actually know them. 😭🔥':result.score>=8?'Okay, you definitely pay attention. 👀':result.score>=5?'Not bad… but we need to talk. 😂':'Fake friend allegations incoming. 😂'}</h2><p>{creator} will see your score on the creator dashboard.</p><div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap',marginTop:12}}><span className="builder-badge">🏆 {result.score===result.total?'Perfect score':result.score>=8?'Top-tier friend':'Challenge completed'}</span><span className="builder-badge">📸 10 real-image questions</span></div><div className="celebration-actions"><button className="primary-btn" onClick={async()=>{const text='I scored '+result.score+'/'+result.total+' on a KnowMeBro challenge! Can you beat me? 😈';try{if(navigator.share)await navigator.share({title:'KnowMeBro challenge result',text,url:window.location.origin+'/?quiz='+code});else{await navigator.clipboard.writeText(text);alert('Result copied!')}}catch{}}}><Icon name="share" size={17}/> Share my score</button><ScoreCardButton result={result} creator={creator} code={code}/><button className="secondary-btn" onClick={()=>window.location.href=window.location.origin+'/?quiz='+code}>Try again</button><button className="secondary-btn" onClick={onHome}>Back home</button></div></main>;
+ const pieces=Array.from({length:18},(_,i)=>i);const tier=scoreTier(result.score,result.total);
+ return <main className="result-page" style={{position:'relative',overflow:'hidden'}}><div className="celebration-pieces" aria-hidden="true">{pieces.map(i=><i key={i} style={{left:(4+i*5)%96+'%',animationDelay:(i*.07)+'s'}}/> )}</div><div className="result-orb"><Icon name="check" size={40}/></div><span className="eyebrow">Challenge complete</span><h1>{result.score}/{result.total}</h1><h2>{tier==='perfect'?'Bro, you actually know them. 😭🔥':tier==='high'?'Okay, you definitely pay attention. 👀':tier==='medium'?'Not bad… but we need to talk. 😂':'Fake friend allegations incoming. 😂'}</h2><p>{creator} will see your score on the creator dashboard.</p><div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap',marginTop:12}}><span className="builder-badge">🏆 {tier==='perfect'?'Perfect score':tier==='high'?'Top-tier friend':tier==='medium'?'Challenge completed':'Keep practising'}</span><span className="builder-badge">📸 {result.total} question visuals</span></div><div className="celebration-actions"><button className="primary-btn" onClick={async()=>{const text='I scored '+result.score+'/'+result.total+' on a KnowMeBro challenge! Can you beat me? 😈';try{if(navigator.share)await navigator.share({title:'KnowMeBro challenge result',text,url:window.location.origin+'/?quiz='+code});else{await navigator.clipboard.writeText(text);alert('Result copied!')}}catch{}}}><Icon name="share" size={17}/> Share my score</button><ScoreCardButton result={result} creator={creator} code={code}/><button className="secondary-btn" onClick={()=>window.location.href=window.location.origin+'/?quiz='+code}>Try again</button><button className="secondary-btn" onClick={onHome}>Back home</button></div></main>;
 }
 
 function ImageLightbox({image,alt,label,onClose}){return <div className="image-lightbox" role="dialog" aria-modal="true" onClick={onClose}><div className="image-lightbox-card" onClick={e=>e.stopPropagation()}><button className="image-lightbox-close" onClick={onClose} aria-label="Close image">×</button><img src={image} alt={alt} onError={handleQuestionImageError}/><div className="image-lightbox-caption"><span className="eyebrow">REAL VISUAL</span><strong>{label}</strong></div></div></div>}
@@ -105,19 +120,19 @@ function FriendQuiz({code,onHome}){
  const [quiz,setQuiz]=useState(null),[answers,setAnswers]=useState([]),[active,setActive]=useState(0),[name,setName]=useState(''),[loading,setLoading]=useState(true),[submitting,setSubmitting]=useState(false),[result,setResult]=useState(null),[error,setError]=useState(''),[lightbox,setLightbox]=useState(false),[showReview,setShowReview]=useState(false),[seconds,setSeconds]=useState(20),[started,setStarted]=useState(false),[startedAt,setStartedAt]=useState(null),[elapsed,setElapsed]=useState(0),[focusMode,setFocusMode]=useState(false),[confidence,setConfidence]=useState([]),[hintRevealed,setHintRevealed]=useState(false);
 
  useEffect(()=>{rpc('get_quiz',{p_code:code}).then(q=>{
-   if(!q||!Array.isArray(q.questions)||q.questions.length===0){setError('This challenge link is invalid or no longer available.');return;}
+   if(!isValidQuizPayload(q)){setError('This challenge link is invalid or no longer available.');return;}
    setQuiz(q);
    q.questions?.forEach(item=>{const img=new Image();img.src=item.image});
    try{
      const saved=JSON.parse(localStorage.getItem('knowmebro-progress-'+code)||'null');
-     if(saved&&Array.isArray(saved.answers)){const total=q.questions?.length||0;setAnswers(Array.from({length:total},(_,i)=>Number.isInteger(saved.answers[i])&&saved.answers[i]>=0&&saved.answers[i]<4?saved.answers[i]:undefined));setConfidence(Array.from({length:total},(_,i)=>Array.isArray(saved.confidence)&&[0,1,2].includes(saved.confidence[i])?saved.confidence[i]:undefined));setName(typeof saved.name==='string'?saved.name.slice(0,30):'');setActive(Math.max(0,Math.min(Number.isInteger(saved.active)?saved.active:0,total-1)));setStarted(saved.started!==false);setStartedAt(Number.isFinite(saved.startedAt)?saved.startedAt:Date.now())}
+     if(saved&&Array.isArray(saved.answers)){const total=q.questions?.length||0;setAnswers(Array.from({length:total},(_,i)=>Number.isInteger(saved.answers[i])&&saved.answers[i]>=0&&saved.answers[i]<4?saved.answers[i]:undefined));setConfidence(Array.from({length:total},(_,i)=>Array.isArray(saved.confidence)&&[0,1,2].includes(saved.confidence[i])?saved.confidence[i]:undefined));const restoredName=typeof saved.name==='string'?saved.name.slice(0,30):'';setName(restoredName);setActive(Math.max(0,Math.min(Number.isInteger(saved.active)?saved.active:0,total-1)));setStarted(shouldResumeProgress({...saved,name:restoredName}));setStartedAt(Number.isFinite(saved.startedAt)?saved.startedAt:Date.now())}
    }catch{}
  }).catch(e=>setError(e.message)).finally(()=>setLoading(false))},[code]);
 
  useEffect(()=>{
    if(!quiz||result)return;
    try{localStorage.setItem('knowmebro-progress-'+code,JSON.stringify({answers,confidence,name,active,started,startedAt}))}catch{}
- },[quiz,result,code,answers,confidence,name,active,started]);
+ },[quiz,result,code,answers,confidence,name,active,started,startedAt]);
 
  const q=quiz?.questions?.[active];
  const picked=q?answers[active]:undefined;
@@ -146,9 +161,10 @@ function FriendQuiz({code,onHome}){
    const onKey=e=>{
      if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
      const key=e.key.toLowerCase();
-     if(key>='a'&&key<='d'){
+     if(showReview){if(e.key==='Escape')setShowReview(false);return;}
+     if(key>='a'&&key<='d'&&started){
        const i=key.charCodeAt(0)-97;
-       if(q?.options?.[i]){setStarted(true);setAnswers(a=>{const n=[...a];n[active]=i;return n});setError('');}
+       if(q?.options?.[i]){setAnswers(a=>{const n=[...a];n[active]=i;return n});setError('');}
      }
      if(e.key==='ArrowRight'&&picked!==undefined&&active<quiz.questions.length-1)setActive(x=>x+1);
      if(e.key==='ArrowLeft'&&active>0)setActive(x=>x-1);
@@ -156,7 +172,7 @@ function FriendQuiz({code,onHome}){
    };
    window.addEventListener('keydown',onKey);
    return()=>window.removeEventListener('keydown',onKey);
- },[quiz,result,active,picked]);
+ },[quiz,result,active,picked,started,showReview]);
 
  if(loading)return <main className="state-page"><div className="loading-orb"/><h1>Loading your challenge...</h1><p>Getting the quiz ready.</p></main>;
  if(error&&!quiz)return <main className="state-page"><div className="error-emoji">😬</div><h1>Challenge not found</h1><p>{error}</p><button className="primary-btn" onClick={onHome}>Go home</button></main>;
@@ -165,7 +181,7 @@ function FriendQuiz({code,onHome}){
 
  const choose=(i)=>{if(!started){setStarted(true);setStartedAt(Date.now())}setAnswers(a=>{const n=[...a];n[active]=i;return n});setError('');};
  const start=()=>{if(!name.trim()){setError('Enter your name first.');return}setStarted(true);setStartedAt(Date.now());setError('')};
- const finish=async()=>{if(!name.trim())return setError('Enter your name first.');if(quiz.questions.some((_,i)=>!Number.isInteger(answers[i])||answers[i]<0||answers[i]>3))return setError('Answer every question.');setSubmitting(true);setError('');try{const r=await rpc('submit_quiz_v2',{p_code:code,p_friend_name:name.trim(),p_answers:answers,p_confidence:confidence.map(value=>value??null)});setResult(r)}catch(e){setError(e.message)}finally{setSubmitting(false)}};
+ const finish=async()=>{if(!name.trim())return setError('Enter your name first.');if(quiz.questions.some((_,i)=>!Number.isInteger(answers[i])||answers[i]<0||answers[i]>3))return setError('Answer every question.');setSubmitting(true);setError('');try{const r=await rpc('submit_quiz_v2',{p_code:code,p_friend_name:name.trim(),p_answers:answers,p_confidence:confidence.map(value=>value??null)});if(!isValidSubmissionResult(r))throw new Error('The server returned an invalid score. Please try submitting again.');setResult(r)}catch(e){setError(e.message)}finally{setSubmitting(false)}};
  const submitReview=()=>{if(!name.trim())return setError('Enter your name first.');if(quiz.questions.some((_,i)=>!Number.isInteger(answers[i])||answers[i]<0||answers[i]>3))return setError('Answer every question.');setShowReview(true)};
  const shareProgress=async()=>{const text=(name||'I')+' am taking a KnowMeBro challenge by '+quiz.creator+' 😈';try{if(navigator.share)await navigator.share({title:quiz.title,text,url:window.location.href});else{await navigator.clipboard.writeText(window.location.href);alert('Challenge link copied!')}}catch{}};
 
@@ -179,12 +195,12 @@ function FriendQuiz({code,onHome}){
 }
 function Results({code,onHome}){
  const [data,setData]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[selected,setSelected]=useState(null),[copied,setCopied]=useState(false),[lightbox,setLightbox]=useState(null),[search,setSearch]=useState(''),[sortMode,setSortMode]=useState('score');
- useEffect(()=>{let token='';try{token=localStorage.getItem('knowmebro-owner-'+code)||'';}catch{}if(!token){setError('Creator access is not available on this browser.');setLoading(false);return}let mounted=true,hasLoaded=false;const load=async()=>{try{const d=await rpc('get_results',{p_code:code,p_token:token});if(mounted){setData(d);setError('');hasLoaded=true;setLoading(false);}}catch(e){if(mounted&&!hasLoaded)setError(e.message||'Could not load results.');}finally{if(mounted&&!hasLoaded)setLoading(false)}};load();const timer=setInterval(load,12000);return()=>{mounted=false;clearInterval(timer)}},[code]);
+ useEffect(()=>{let token='';try{token=localStorage.getItem('knowmebro-owner-'+code)||'';}catch{}if(!token){setError('Creator access is not available on this browser.');setLoading(false);return}let mounted=true,hasLoaded=false;const load=async()=>{try{const d=await rpc('get_results',{p_code:code,p_token:token});if(!isValidResultsPayload(d))throw new Error('The server returned incomplete results. Please try again.');if(mounted){setData({...d,attempts:Array.isArray(d.attempts)?d.attempts:[]});setError('');hasLoaded=true;setLoading(false);}}catch(e){if(mounted&&!hasLoaded)setError(e.message||'Could not load results.');}finally{if(mounted&&!hasLoaded)setLoading(false)}};load();const timer=setInterval(load,12000);return()=>{mounted=false;clearInterval(timer)}},[code]);
  if(loading)return <main className="state-page"><div className="loading-orb"/><h1>Loading results...</h1></main>;
  if(error)return <main className="state-page"><div className="error-emoji">🔐</div><h1>Creator access needed</h1><p>{error}</p><button className="primary-btn" onClick={onHome}>Go home</button></main>;
  const attempts=data.attempts||[], questions=data.quiz.questions||[], totalQuestions=questions.length||10, visibleAttempts=attempts.filter(a=>a.friend_name.toLowerCase().includes(search.toLowerCase())).sort((a,b)=>sortMode==='score'?b.score-a.score:new Date(b.created_at)-new Date(a.created_at)), avg=attempts.length?(attempts.reduce((s,a)=>s+a.score,0)/attempts.length).toFixed(1):'—'; const bestAttempt=attempts.reduce((best,a)=>!best||a.score>best.score?a:best,null); const scoreBuckets=[0,0,0,0,0]; attempts.forEach(a=>scoreBuckets[Math.min(4,Math.floor((a.score/Math.max(1,totalQuestions))*5))]++); const hardest=questions.map((q,i)=>({q,i,misses:attempts.filter(a=>a.answers?.[i]!==q.correct).length})).sort((a,b)=>b.misses-a.misses)[0];
  const questionAccuracy=questions.map((q,i)=>({q,i,correct:attempts.filter(a=>a.answers?.[i]===q.correct).length})); const sortedAccuracy=[...questionAccuracy].sort((a,b)=>a.correct-b.correct); const topThree=[...attempts].sort((a,b)=>b.score-a.score).slice(0,3); const confidenceLabels=['🤔 Guessing','🙂 Pretty sure','🔥 100% sure']; const confidenceStats=confidenceLabels.map((label,level)=>{const picks=attempts.flatMap(a=>(a.confidence||[]).map((c,i)=>({confidence:c,correct:a.answers?.[i]===questions[i]?.correct}))).filter(x=>x.confidence===level);return {label,level,count:picks.length,correct:picks.filter(x=>x.correct).length,accuracy:picks.length?Math.round(picks.filter(x=>x.correct).length/picks.length*100):0}}); const highConfidenceMisses=attempts.reduce((sum,a)=>sum+(a.confidence||[]).filter((c,i)=>c===2&&a.answers?.[i]!==questions[i]?.correct).length,0); const confidencePicks=confidenceStats.reduce((sum,x)=>sum+x.count,0);
- const refresh=async()=>{let token='';try{token=localStorage.getItem('knowmebro-owner-'+code)||'';}catch{}if(token){try{setData(await rpc('get_results',{p_code:code,p_token:token}));setError('');}catch{}}};
+ const refresh=async()=>{let token='';try{token=localStorage.getItem('knowmebro-owner-'+code)||'';}catch{}if(token){try{const next=await rpc('get_results',{p_code:code,p_token:token});if(isValidResultsPayload(next)){setData({...next,attempts:Array.isArray(next.attempts)?next.attempts:[]});setError('');}}catch{}}};
  const downloadResults=()=>{const rows=[['Friend','Score','Total','Played at'],...attempts.map(a=>[a.friend_name,a.score,totalQuestions,new Date(a.created_at).toISOString()])];const csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='knowmebro-'+code+'-results.csv';link.click();URL.revokeObjectURL(url)};
  const downloadLeaderboard=()=>{const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=760;const x=canvas.getContext('2d');const g=x.createLinearGradient(0,0,1200,760);g.addColorStop(0,'#0b1020');g.addColorStop(1,'#24164d');x.fillStyle=g;x.fillRect(0,0,1200,760);x.fillStyle='#fff';x.font='800 58px Arial';x.fillText('KNOWMEBRO',70,90);x.font='600 30px Arial';x.fillStyle='#cbd5e1';x.fillText(data.quiz.title,70,140);x.font='700 28px Arial';x.fillStyle='#a78bfa';x.fillText('HALL OF FAME',70,205);const top=[...attempts].sort((a,b)=>b.score-a.score).slice(0,5);top.forEach((a,i)=>{const y=270+i*82;x.fillStyle='#fff';x.font='700 30px Arial';x.fillText((i+1)+'. '+a.friend_name,80,y);x.fillStyle='#cbd5e1';x.font='600 26px Arial';x.fillText(a.score+'/'+totalQuestions,930,y)});x.fillStyle='#94a3b8';x.font='500 20px Arial';x.fillText(attempts.length+' friends played  •  knowmebro.vercel.app',70,700);const link=document.createElement('a');link.download='knowmebro-'+code+'-leaderboard.png';link.href=canvas.toDataURL('image/png');link.click()};
  const shareResults=async()=>{const best=attempts.length?Math.max(...attempts.map(a=>a.score)):0;const text=attempts.length?data.quiz.title+' — '+attempts.length+' friends played. Best score: '+best+'/'+totalQuestions+'. Who can beat it? 😈':'I just made a KnowMeBro quiz: '+data.quiz.title+' 😈';const copySummary=async()=>{try{await navigator.clipboard.writeText(text);setCopied(true);setTimeout(()=>setCopied(false),1800)}catch{window.prompt('Copy this results summary:',text)}};if(navigator.share){try{await navigator.share({title:'KnowMeBro results',text,url:window.location.origin+'/?quiz='+code})}catch{}}else await copySummary();};
