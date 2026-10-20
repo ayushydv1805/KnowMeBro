@@ -146,9 +146,9 @@ function FriendQuiz({code,onHome}){
    const onKey=e=>{
      if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
      const key=e.key.toLowerCase();
-     if(key>='a'&&key<='d'){
+     if(key>='a'&&key<='d'&&started){
        const i=key.charCodeAt(0)-97;
-       if(q?.options?.[i]){setStarted(true);setAnswers(a=>{const n=[...a];n[active]=i;return n});setError('');}
+       if(q?.options?.[i]){setAnswers(a=>{const n=[...a];n[active]=i;return n});setError('');}
      }
      if(e.key==='ArrowRight'&&picked!==undefined&&active<quiz.questions.length-1)setActive(x=>x+1);
      if(e.key==='ArrowLeft'&&active>0)setActive(x=>x-1);
