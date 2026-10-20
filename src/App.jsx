@@ -110,14 +110,14 @@ function FriendQuiz({code,onHome}){
    q.questions?.forEach(item=>{const img=new Image();img.src=item.image});
    try{
      const saved=JSON.parse(localStorage.getItem('knowmebro-progress-'+code)||'null');
-     if(saved&&Array.isArray(saved.answers)){const total=q.questions?.length||0;setAnswers(Array.from({length:total},(_,i)=>Number.isInteger(saved.answers[i])&&saved.answers[i]>=0&&saved.answers[i]<4?saved.answers[i]:undefined));setConfidence(Array.from({length:total},(_,i)=>Array.isArray(saved.confidence)&&[0,1,2].includes(saved.confidence[i])?saved.confidence[i]:undefined));setName(typeof saved.name==='string'?saved.name.slice(0,30):'');setActive(Math.max(0,Math.min(Number.isInteger(saved.active)?saved.active:0,total-1)));setStarted(saved.started!==false);setStartedAt(Number.isFinite(saved.startedAt)?saved.startedAt:Date.now())}
+     if(saved&&Array.isArray(saved.answers)){const total=q.questions?.length||0;setAnswers(Array.from({length:total},(_,i)=>Number.isInteger(saved.answers[i])&&saved.answers[i]>=0&&saved.answers[i]<4?saved.answers[i]:undefined));setConfidence(Array.from({length:total},(_,i)=>Array.isArray(saved.confidence)&&[0,1,2].includes(saved.confidence[i])?saved.confidence[i]:undefined));const restoredName=typeof saved.name==='string'?saved.name.slice(0,30):'';setName(restoredName);setActive(Math.max(0,Math.min(Number.isInteger(saved.active)?saved.active:0,total-1)));setStarted(saved.started!==false&&restoredName.trim().length>0);setStartedAt(Number.isFinite(saved.startedAt)?saved.startedAt:Date.now())}
    }catch{}
  }).catch(e=>setError(e.message)).finally(()=>setLoading(false))},[code]);
 
  useEffect(()=>{
    if(!quiz||result)return;
    try{localStorage.setItem('knowmebro-progress-'+code,JSON.stringify({answers,confidence,name,active,started,startedAt}))}catch{}
- },[quiz,result,code,answers,confidence,name,active,started]);
+ },[quiz,result,code,answers,confidence,name,active,started,startedAt]);
 
  const q=quiz?.questions?.[active];
  const picked=q?answers[active]:undefined;
@@ -146,6 +146,7 @@ function FriendQuiz({code,onHome}){
    const onKey=e=>{
      if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
      const key=e.key.toLowerCase();
+     if(showReview){if(e.key==='Escape')setShowReview(false);return;}
      if(key>='a'&&key<='d'&&started){
        const i=key.charCodeAt(0)-97;
        if(q?.options?.[i]){setAnswers(a=>{const n=[...a];n[active]=i;return n});setError('');}
@@ -156,7 +157,7 @@ function FriendQuiz({code,onHome}){
    };
    window.addEventListener('keydown',onKey);
    return()=>window.removeEventListener('keydown',onKey);
- },[quiz,result,active,picked]);
+ },[quiz,result,active,picked,started,showReview]);
 
  if(loading)return <main className="state-page"><div className="loading-orb"/><h1>Loading your challenge...</h1><p>Getting the quiz ready.</p></main>;
  if(error&&!quiz)return <main className="state-page"><div className="error-emoji">😬</div><h1>Challenge not found</h1><p>{error}</p><button className="primary-btn" onClick={onHome}>Go home</button></main>;
