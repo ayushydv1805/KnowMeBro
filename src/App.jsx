@@ -32,9 +32,22 @@ const QUESTION_TEMPLATES=[
 ];
 
 async function rpc(name, body) {
-  const res=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},body:JSON.stringify(body)});
+  const controller=new AbortController();
+  const timeoutId=window.setTimeout(()=>controller.abort(),30000);
+  let res;
+  try {
+    res=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},body:JSON.stringify(body),signal:controller.signal});
+  } catch(error) {
+    if(error?.name==='AbortError') throw new Error('The server took too long to respond. Please try again.');
+    throw new Error('Could not connect to KnowMeBro. Check your internet connection and try again.');
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
   const data=await res.json().catch(()=>null);
-  if(!res.ok) throw new Error(data?.message||data?.hint||data?.error||'Something went wrong.');
+  if(!res.ok) {
+    if(res.status===429) throw new Error('Too many requests. Please wait a moment and try again.');
+    throw new Error(data?.message||data?.hint||data?.error||(res.status>=500?'The server is temporarily unavailable. Please try again.':'Request failed ('+res.status+'). Please try again.'));
+  }
   return data;
 }
 function Icon({name,size=20}){
@@ -78,6 +91,7 @@ function QuizBuilder({onBack,onDone}){
   try{
    const cleanQuestions=questions.map(q=>({...q,vibe:typeof q.vibe==='string'&&q.vibe.trim()?q.vibe:category}));
    const data=await rpc('create_quiz',{p_creator:creator.trim(),p_title:title.trim()||'How well do you know me?',p_category:category,p_questions:cleanQuestions});
+   if(!data||typeof data.share_code!=='string'||!data.share_code.trim()||typeof data.creator_token!=='string'||!data.creator_token.trim())throw new Error('The server did not return valid challenge access details. Your draft is still saved; please try again.');
    try{localStorage.removeItem(BUILDER_DRAFT_KEY);localStorage.setItem('knowmebro-owner-'+data.share_code,data.creator_token);}catch{}
    onDone({...data,creator:creator.trim(),title:title.trim()||'How well do you know me?',category,questions:cleanQuestions});
   }catch(e){setError(e.message)}finally{setLoading(false)}
@@ -105,7 +119,8 @@ function FriendQuiz({code,onHome}){
  const [quiz,setQuiz]=useState(null),[answers,setAnswers]=useState([]),[active,setActive]=useState(0),[name,setName]=useState(''),[loading,setLoading]=useState(true),[submitting,setSubmitting]=useState(false),[result,setResult]=useState(null),[error,setError]=useState(''),[lightbox,setLightbox]=useState(false),[showReview,setShowReview]=useState(false),[seconds,setSeconds]=useState(20),[started,setStarted]=useState(false),[startedAt,setStartedAt]=useState(null),[elapsed,setElapsed]=useState(0),[focusMode,setFocusMode]=useState(false),[confidence,setConfidence]=useState([]),[hintRevealed,setHintRevealed]=useState(false);
 
  useEffect(()=>{rpc('get_quiz',{p_code:code}).then(q=>{
-   if(!q||!Array.isArray(q.questions)||q.questions.length===0){setError('This challenge link is invalid or no longer available.');return;}
+   const validQuiz=q&&typeof q.creator==='string'&&typeof q.title==='string'&&Array.isArray(q.questions)&&q.questions.length>=5&&q.questions.length<=20&&q.questions.every(item=>item&&typeof item.question==='string'&&Array.isArray(item.options)&&item.options.length===4&&item.options.every(option=>typeof option==='string'));
+   if(!validQuiz){setError('This challenge link is invalid or no longer available.');return;}
    setQuiz(q);
    q.questions?.forEach(item=>{const img=new Image();img.src=item.image});
    try{
@@ -166,7 +181,7 @@ function FriendQuiz({code,onHome}){
 
  const choose=(i)=>{if(!started){setStarted(true);setStartedAt(Date.now())}setAnswers(a=>{const n=[...a];n[active]=i;return n});setError('');};
  const start=()=>{if(!name.trim()){setError('Enter your name first.');return}setStarted(true);setStartedAt(Date.now());setError('')};
- const finish=async()=>{if(!name.trim())return setError('Enter your name first.');if(quiz.questions.some((_,i)=>!Number.isInteger(answers[i])||answers[i]<0||answers[i]>3))return setError('Answer every question.');setSubmitting(true);setError('');try{const r=await rpc('submit_quiz_v2',{p_code:code,p_friend_name:name.trim(),p_answers:answers,p_confidence:confidence.map(value=>value??null)});setResult(r)}catch(e){setError(e.message)}finally{setSubmitting(false)}};
+ const finish=async()=>{if(!name.trim())return setError('Enter your name first.');if(quiz.questions.some((_,i)=>!Number.isInteger(answers[i])||answers[i]<0||answers[i]>3))return setError('Answer every question.');setSubmitting(true);setError('');try{const r=await rpc('submit_quiz_v2',{p_code:code,p_friend_name:name.trim(),p_answers:answers,p_confidence:confidence.map(value=>value??null)});if(!r||!Number.isFinite(r.score)||!Number.isFinite(r.total))throw new Error('The server returned an invalid score. Please try submitting again.');setResult(r)}catch(e){setError(e.message)}finally{setSubmitting(false)}};
  const submitReview=()=>{if(!name.trim())return setError('Enter your name first.');if(quiz.questions.some((_,i)=>!Number.isInteger(answers[i])||answers[i]<0||answers[i]>3))return setError('Answer every question.');setShowReview(true)};
  const shareProgress=async()=>{const text=(name||'I')+' am taking a KnowMeBro challenge by '+quiz.creator+' 😈';try{if(navigator.share)await navigator.share({title:quiz.title,text,url:window.location.href});else{await navigator.clipboard.writeText(window.location.href);alert('Challenge link copied!')}}catch{}};
 
@@ -180,12 +195,12 @@ function FriendQuiz({code,onHome}){
 }
 function Results({code,onHome}){
  const [data,setData]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[selected,setSelected]=useState(null),[copied,setCopied]=useState(false),[lightbox,setLightbox]=useState(null),[search,setSearch]=useState(''),[sortMode,setSortMode]=useState('score');
- useEffect(()=>{let token='';try{token=localStorage.getItem('knowmebro-owner-'+code)||'';}catch{}if(!token){setError('Creator access is not available on this browser.');setLoading(false);return}let mounted=true,hasLoaded=false;const load=async()=>{try{const d=await rpc('get_results',{p_code:code,p_token:token});if(mounted){setData(d);setError('');hasLoaded=true;setLoading(false);}}catch(e){if(mounted&&!hasLoaded)setError(e.message||'Could not load results.');}finally{if(mounted&&!hasLoaded)setLoading(false)}};load();const timer=setInterval(load,12000);return()=>{mounted=false;clearInterval(timer)}},[code]);
+ useEffect(()=>{let token='';try{token=localStorage.getItem('knowmebro-owner-'+code)||'';}catch{}if(!token){setError('Creator access is not available on this browser.');setLoading(false);return}let mounted=true,hasLoaded=false;const load=async()=>{try{const d=await rpc('get_results',{p_code:code,p_token:token});if(!d||typeof d!=='object'||!d.quiz||!Array.isArray(d.quiz.questions))throw new Error('The server returned incomplete results. Please try again.');if(mounted){setData({...d,attempts:Array.isArray(d.attempts)?d.attempts:[]});setError('');hasLoaded=true;setLoading(false);}}catch(e){if(mounted&&!hasLoaded)setError(e.message||'Could not load results.');}finally{if(mounted&&!hasLoaded)setLoading(false)}};load();const timer=setInterval(load,12000);return()=>{mounted=false;clearInterval(timer)}},[code]);
  if(loading)return <main className="state-page"><div className="loading-orb"/><h1>Loading results...</h1></main>;
  if(error)return <main className="state-page"><div className="error-emoji">🔐</div><h1>Creator access needed</h1><p>{error}</p><button className="primary-btn" onClick={onHome}>Go home</button></main>;
  const attempts=data.attempts||[], questions=data.quiz.questions||[], totalQuestions=questions.length||10, visibleAttempts=attempts.filter(a=>a.friend_name.toLowerCase().includes(search.toLowerCase())).sort((a,b)=>sortMode==='score'?b.score-a.score:new Date(b.created_at)-new Date(a.created_at)), avg=attempts.length?(attempts.reduce((s,a)=>s+a.score,0)/attempts.length).toFixed(1):'—'; const bestAttempt=attempts.reduce((best,a)=>!best||a.score>best.score?a:best,null); const scoreBuckets=[0,0,0,0,0]; attempts.forEach(a=>scoreBuckets[Math.min(4,Math.floor((a.score/Math.max(1,totalQuestions))*5))]++); const hardest=questions.map((q,i)=>({q,i,misses:attempts.filter(a=>a.answers?.[i]!==q.correct).length})).sort((a,b)=>b.misses-a.misses)[0];
  const questionAccuracy=questions.map((q,i)=>({q,i,correct:attempts.filter(a=>a.answers?.[i]===q.correct).length})); const sortedAccuracy=[...questionAccuracy].sort((a,b)=>a.correct-b.correct); const topThree=[...attempts].sort((a,b)=>b.score-a.score).slice(0,3); const confidenceLabels=['🤔 Guessing','🙂 Pretty sure','🔥 100% sure']; const confidenceStats=confidenceLabels.map((label,level)=>{const picks=attempts.flatMap(a=>(a.confidence||[]).map((c,i)=>({confidence:c,correct:a.answers?.[i]===questions[i]?.correct}))).filter(x=>x.confidence===level);return {label,level,count:picks.length,correct:picks.filter(x=>x.correct).length,accuracy:picks.length?Math.round(picks.filter(x=>x.correct).length/picks.length*100):0}}); const highConfidenceMisses=attempts.reduce((sum,a)=>sum+(a.confidence||[]).filter((c,i)=>c===2&&a.answers?.[i]!==questions[i]?.correct).length,0); const confidencePicks=confidenceStats.reduce((sum,x)=>sum+x.count,0);
- const refresh=async()=>{let token='';try{token=localStorage.getItem('knowmebro-owner-'+code)||'';}catch{}if(token){try{setData(await rpc('get_results',{p_code:code,p_token:token}));setError('');}catch{}}};
+ const refresh=async()=>{let token='';try{token=localStorage.getItem('knowmebro-owner-'+code)||'';}catch{}if(token){try{const next=await rpc('get_results',{p_code:code,p_token:token});if(next&&typeof next==='object'&&next.quiz&&Array.isArray(next.quiz.questions)){setData({...next,attempts:Array.isArray(next.attempts)?next.attempts:[]});setError('');}}catch{}}};
  const downloadResults=()=>{const rows=[['Friend','Score','Total','Played at'],...attempts.map(a=>[a.friend_name,a.score,totalQuestions,new Date(a.created_at).toISOString()])];const csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='knowmebro-'+code+'-results.csv';link.click();URL.revokeObjectURL(url)};
  const downloadLeaderboard=()=>{const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=760;const x=canvas.getContext('2d');const g=x.createLinearGradient(0,0,1200,760);g.addColorStop(0,'#0b1020');g.addColorStop(1,'#24164d');x.fillStyle=g;x.fillRect(0,0,1200,760);x.fillStyle='#fff';x.font='800 58px Arial';x.fillText('KNOWMEBRO',70,90);x.font='600 30px Arial';x.fillStyle='#cbd5e1';x.fillText(data.quiz.title,70,140);x.font='700 28px Arial';x.fillStyle='#a78bfa';x.fillText('HALL OF FAME',70,205);const top=[...attempts].sort((a,b)=>b.score-a.score).slice(0,5);top.forEach((a,i)=>{const y=270+i*82;x.fillStyle='#fff';x.font='700 30px Arial';x.fillText((i+1)+'. '+a.friend_name,80,y);x.fillStyle='#cbd5e1';x.font='600 26px Arial';x.fillText(a.score+'/'+totalQuestions,930,y)});x.fillStyle='#94a3b8';x.font='500 20px Arial';x.fillText(attempts.length+' friends played  •  knowmebro.vercel.app',70,700);const link=document.createElement('a');link.download='knowmebro-'+code+'-leaderboard.png';link.href=canvas.toDataURL('image/png');link.click()};
  const shareResults=async()=>{const best=attempts.length?Math.max(...attempts.map(a=>a.score)):0;const text=attempts.length?data.quiz.title+' — '+attempts.length+' friends played. Best score: '+best+'/'+totalQuestions+'. Who can beat it? 😈':'I just made a KnowMeBro quiz: '+data.quiz.title+' 😈';const copySummary=async()=>{try{await navigator.clipboard.writeText(text);setCopied(true);setTimeout(()=>setCopied(false),1800)}catch{window.prompt('Copy this results summary:',text)}};if(navigator.share){try{await navigator.share({title:'KnowMeBro results',text,url:window.location.origin+'/?quiz='+code})}catch{}}else await copySummary();};
