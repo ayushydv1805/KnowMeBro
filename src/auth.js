@@ -119,6 +119,8 @@ export async function updateUserMetadata(session, metadata) {
 export async function signOut(session) {
   try {
     if (session?.access_token) await requestAuth('logout', { accessToken: session.access_token });
+  } catch {
+    // Local sign-out must still work if the network or auth service is unavailable.
   } finally {
     clearStoredSession();
   }
