@@ -11,8 +11,12 @@
 - Share challenge links that work across devices.
 - Resume an unfinished quiz on the same browser.
 - Review answers, confidence choices, score analytics, and the leaderboard.
+- Unlock creator achievements for milestones such as the first player, a growing crowd, a perfect score, and high average scores.
+- Download a shareable “Friendship Wrapped” recap image with attempts, average score, perfect scores, and top friend.
 - Export results as CSV and save a leaderboard image.
 - Light and dark themes, keyboard navigation, responsive layouts, and image fallbacks.
+- Visible keyboard focus, skip-to-content navigation, screen-reader labels and live error/status announcements.
+- Dialog keyboard dismissal and focus restoration, plus reduced-motion support for motion-sensitive users.
 
 ## Tech stack
 
@@ -26,6 +30,12 @@
 ```bash
 npm install
 npm run dev
+```
+
+Run the regression tests:
+
+```bash
+npm test
 ```
 
 For a production build:
@@ -47,4 +57,6 @@ Database migration history is tracked in `supabase/migrations/`. The public quiz
 - Alternate static host: https://knowmebro.onrender.com
 - Source: https://github.com/ayushydv1805/KnowMeBro
 
-GitHub Actions runs `npm run build` on pushes and pull requests to `main`.
+GitHub Actions runs regression tests, a production build, npm dependency auditing, and CodeQL static analysis on branch pushes, pull requests targeting `main`, and a scheduled weekly run. Dependabot proposes weekly npm and GitHub Actions updates.
+
+See [Security Policy](./SECURITY.md) to report a vulnerability and the [Production Readiness Checklist](./docs/PRODUCTION_READINESS.md) for the release gates and live-service checks.
