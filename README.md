@@ -13,6 +13,8 @@
 - Review answers, confidence choices, score analytics, and the leaderboard.
 - Export results as CSV and save a leaderboard image.
 - Light and dark themes, keyboard navigation, responsive layouts, and image fallbacks.
+- Visible keyboard focus, skip-to-content navigation, screen-reader labels and live error/status announcements.
+- Dialog keyboard dismissal and focus restoration, plus reduced-motion support for motion-sensitive users.
 
 ## Tech stack
 
