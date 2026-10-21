@@ -34,7 +34,7 @@ async function requestAuth(path, { method = 'POST', body, accessToken } = {}) {
 }
 
 export function normalizeSession(data) {
-  if (!data?.access_token || !data?.refresh_token) return null;
+  if (!data?.access_token) return null;
   return {
     access_token: data.access_token,
     refresh_token: data.refresh_token,
