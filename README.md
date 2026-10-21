@@ -56,3 +56,8 @@ The account screens use Supabase Auth. Before enabling sign-up and password reco
 When signed in, new quizzes are linked to the account's user metadata so creator access can be restored on another device. Quizzes created before login remain on the browser where their creator token was stored unless you recreate them while signed in.
 
 GitHub Actions runs `npm run build` on pushes and pull requests to `main`.
+
+
+## Desktop downloads (Windows)
+
+KnowMeBro is also packaged as a Windows desktop app. The [Windows build workflow](https://github.com/ayushydv1805/KnowMeBro/actions/workflows/windows-desktop.yml) produces a Setup installer and a portable EXE. Tagged releases publish the EXEs on the [GitHub Releases page](https://github.com/ayushydv1805/KnowMeBro/releases). See [Windows installation instructions](WINDOWS_INSTALL.md). The desktop app requires internet access and uses the same hosted app and account backend.
