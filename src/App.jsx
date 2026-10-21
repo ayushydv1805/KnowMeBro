@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  clearStoredSession, getLinkedQuizzes, linkQuizToAccount, refreshSession,
+  clearStoredSession, getLinkedQuizzes, linkQuizToAccount, normalizeSession, refreshSession,
   restoreLinkedCreatorTokens, restoreSession, sendPasswordReset, signIn,
   signOut, signUp, storeSession, updatePassword
 } from './auth.js';
@@ -280,8 +280,9 @@ export default function App(){
  useEffect(()=>{
   const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));
   if(hash.get('type')==='recovery'&&hash.get('access_token')){
-   const recovered=storeSession({access_token:hash.get('access_token'),refresh_token:hash.get('refresh_token')||'',expires_in:Number(hash.get('expires_in'))||3600,token_type:'bearer',user:null});
-   setRecoverySession(recovered);setAuthSession(recovered);setAuthMode('reset');setScreen('auth');setAuthReady(true);
+   const recovered=normalizeSession({access_token:hash.get('access_token'),refresh_token:hash.get('refresh_token')||'',expires_in:Number(hash.get('expires_in'))||3600,token_type:'bearer',user:null});
+   if(!recovered){setAuthMode('login');setScreen('auth');setAuthReady(true);return;}
+   setRecoverySession(recovered);setAuthSession(null);setAuthMode('reset');setScreen('auth');setAuthReady(true);
    window.history.replaceState({},'',window.location.pathname+window.location.search);return;
   }
   let active=true;
