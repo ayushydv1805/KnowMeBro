@@ -3,8 +3,8 @@
   "appName": "KnowMeBro",
   "webDir": "dist",
   "server": {
-    "url": "https://knowmebro.vercel.app",
+    "url": "https://knowmebro.onrender.com",
     "cleartext": false,
-    "allowNavigation": ["knowmebro.vercel.app"]
+    "allowNavigation": ["knowmebro.onrender.com"]
   }
 }
