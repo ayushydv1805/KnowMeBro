@@ -1498,3 +1498,14 @@ button:disabled,
     transition: none;
   }
 }
+
+
+@media (max-width: 650px) {
+  .field input,
+  .field textarea,
+  .field select,
+  .leaderboard-tools input,
+  .leaderboard-tools select {
+    font-size: 16px;
+  }
+}
