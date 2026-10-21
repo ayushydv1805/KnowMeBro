@@ -171,7 +171,8 @@ test('achievement progress stays bounded and does not unlock mind reader too ear
 test('CSV cells quote delimiters and escape spreadsheet formula injection', () => {
   assert.equal(toSafeCsvCell('=1+1'), '"\'=1+1"');
   assert.equal(toSafeCsvCell('  @SUM(A1:A2)'), '"\'  @SUM(A1:A2)"');
-  assert.equal(toSafeCsvCell('\\t-1+1'), '"\'\\t-1+1"');
+  const tabFormula = String.fromCharCode(9) + '-1+1';
+  assert.equal(toSafeCsvCell(tabFormula), '"' + "'" + tabFormula + '"');
   assert.equal(toSafeCsvCell('+cmd|\'/C calc\'!A0'), '"\'+cmd|\'/C calc\'!A0"');
   assert.equal(toSafeCsvCell('Alex, "Ace"'), '"Alex, ""Ace"""');
   assert.equal(toSafeCsvCell(12), '"12"');
