@@ -197,7 +197,8 @@ function FriendQuiz({code,onHome}){
 }
 function Results({code,onHome}){
  const [data,setData]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[selected,setSelected]=useState(null),[copied,setCopied]=useState(false),[lightbox,setLightbox]=useState(null),[search,setSearch]=useState(''),[sortMode,setSortMode]=useState('score');
- useEffect(()=>{if(!selected)return;const previous=document.activeElement;const closeButton=document.querySelector('.answer-modal-card .answer-modal-head button');closeButton?.focus();const onKeyDown=e=>{if(e.key==='Escape')setSelected(null)};window.addEventListener('keydown',onKeyDown);return()=>{window.removeEventListener('keydown',onKeyDown);if(previous&&typeof previous.focus==='function')previous.focus();}},[selected]);
+ const lightboxOpen=useRef(false);lightboxOpen.current=Boolean(lightbox);
+ useEffect(()=>{if(!selected)return;const previous=document.activeElement;const closeButton=document.querySelector('.answer-modal-card .answer-modal-head button');closeButton?.focus();const onKeyDown=e=>{if(e.key==='Escape'&&!lightboxOpen.current)setSelected(null)};window.addEventListener('keydown',onKeyDown);return()=>{window.removeEventListener('keydown',onKeyDown);if(previous&&typeof previous.focus==='function')previous.focus();}},[selected]);
  useEffect(()=>{let token='';try{token=localStorage.getItem('knowmebro-owner-'+code)||'';}catch{}if(!token){setError('Creator access is not available on this browser.');setLoading(false);return}let mounted=true,hasLoaded=false;const load=async()=>{try{const d=await rpc('get_results',{p_code:code,p_token:token});if(!isValidResultsPayload(d))throw new Error('The server returned incomplete results. Please try again.');if(mounted){setData({...d,attempts:Array.isArray(d.attempts)?d.attempts:[]});setError('');hasLoaded=true;setLoading(false);}}catch(e){if(mounted&&!hasLoaded)setError(e.message||'Could not load results.');}finally{if(mounted&&!hasLoaded)setLoading(false)}};load();const timer=setInterval(load,12000);return()=>{mounted=false;clearInterval(timer)}},[code]);
  if(loading)return <main className="state-page" role="status" aria-live="polite"><div className="loading-orb"/><h1>Loading results...</h1></main>;
  if(error)return <main className="state-page" role="alert" aria-live="assertive"><div className="error-emoji">🔐</div><h1>Creator access needed</h1><p>{error}</p><button className="primary-btn" onClick={onHome}>Go home</button></main>;
@@ -218,7 +219,7 @@ function Results({code,onHome}){
 }
 
 export default function App(){
- const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('knowmebro-theme')||'light'}catch{return'light'}});
+ const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('knowmebro-theme')==='dark'?'dark':'light'}catch{return'light'}});
  const [screen,setScreen]=useState('home'),[created,setCreated]=useState(null),[code,setCode]=useState('');
  useEffect(()=>{document.documentElement.dataset.theme=theme;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#090b13':'#f7f8fc');try{localStorage.setItem('knowmebro-theme',theme)}catch{}},[theme]);
  useEffect(()=>{const p=new URLSearchParams(window.location.search);const c=p.get('quiz');if(c){setCode(c.toUpperCase());setScreen(p.get('results')==='1'?'results':'friend')}},[]);
