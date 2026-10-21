@@ -7,6 +7,7 @@ import {
   isValidResultsPayload,
   shouldResumeProgress,
   scoreTier,
+  toSafeCsvCell,
 } from '../src/quizUtils.js';
 
 function makeQuestions(count = 5, includeCorrect = false) {
@@ -164,4 +165,15 @@ test('achievement progress stays bounded and does not unlock mind reader too ear
   assert.ok(badges.every((badge) => badge.progress >= 0 && badge.progress <= 1));
   assert.equal(byId['first-player'].progress, 1);
   assert.equal(getCreatorAchievements([], 20).find((badge) => badge.id === 'quiz-architect').unlocked, true);
+});
+
+
+test('CSV cells quote delimiters and escape spreadsheet formula injection', () => {
+  assert.equal(toSafeCsvCell('=1+1'), '"\'=1+1"');
+  assert.equal(toSafeCsvCell('  @SUM(A1:A2)'), '"\'  @SUM(A1:A2)"');
+  assert.equal(toSafeCsvCell('\\t-1+1'), '"\'\\t-1+1"');
+  assert.equal(toSafeCsvCell('+cmd|\'/C calc\'!A0'), '"\'+cmd|\'/C calc\'!A0"');
+  assert.equal(toSafeCsvCell('Alex, "Ace"'), '"Alex, ""Ace"""');
+  assert.equal(toSafeCsvCell(12), '"12"');
+  assert.equal(toSafeCsvCell(null), '""');
 });
