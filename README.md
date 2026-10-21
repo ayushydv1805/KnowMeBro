@@ -13,6 +13,8 @@
 - Review answers, confidence choices, score analytics, and the leaderboard.
 - Export results as CSV and save a leaderboard image.
 - Light and dark themes, keyboard navigation, responsive layouts, and image fallbacks.
+- Visible keyboard focus, skip-to-content navigation, screen-reader labels and live error/status announcements.
+- Dialog keyboard dismissal and focus restoration, plus reduced-motion support for motion-sensitive users.
 
 ## Tech stack
 
@@ -26,6 +28,12 @@
 ```bash
 npm install
 npm run dev
+```
+
+Run the regression tests:
+
+```bash
+npm test
 ```
 
 For a production build:
@@ -47,4 +55,4 @@ Database migration history is tracked in `supabase/migrations/`. The public quiz
 - Alternate static host: https://knowmebro.onrender.com
 - Source: https://github.com/ayushydv1805/KnowMeBro
 
-GitHub Actions runs `npm run build` on pushes and pull requests to `main`.
+GitHub Actions runs `npm test` and `npm run build` on pushes and pull requests to `main`.
