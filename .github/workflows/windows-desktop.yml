@@ -1,9 +1,8 @@
-name: Build KnowMeBro for Windows
+name: Build KnowMeBro Downloads
 
 on:
   push:
     branches: [main]
-    tags: ["v*"]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -46,10 +45,61 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  publish-release:
-    name: Attach Windows downloads to GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build-windows
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install web dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Add Capacitor Android wrapper
+        run: |
+          npm install @capacitor/core @capacitor/android
+          npm install --save-dev @capacitor/cli
+          npx cap add android
+          npx cap sync android
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Prepare public APK filename
+        run: |
+          mkdir -p release
+          cp android/app/build/outputs/apk/debug/app-debug.apk release/KnowMeBro.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: KnowMeBro-Android-APK
+          path: release/KnowMeBro.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-downloads:
+    name: Publish stable download links
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [build-windows, build-android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -58,12 +108,39 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: KnowMeBro-Windows-Downloads
-          path: release
+          path: release/windows
 
-      - name: Publish release assets
+      - name: Download Android build
+        uses: actions/download-artifact@v4
+        with:
+          name: KnowMeBro-Android-APK
+          path: release/android
+
+      - name: Prepare stable release asset names
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          cp release/android/KnowMeBro.apk release-assets/KnowMeBro.apk
+          cp release/windows/KnowMeBro-Setup-*.exe release-assets/KnowMeBro-Setup.exe
+          cp release/windows/KnowMeBro-Portable-*.exe release-assets/KnowMeBro-Portable.exe
+          ls -lh release-assets
+
+      - name: Publish downloadable release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: download-build-${{ github.run_number }}
+          name: KnowMeBro downloads
+          body: |
+            Official KnowMeBro downloads.
+
+            - Android: KnowMeBro.apk
+            - Windows installer: KnowMeBro-Setup.exe
+            - Windows portable app: KnowMeBro-Portable.exe
+
+            The apps require an internet connection and use the existing KnowMeBro cloud account/backend.
           files: |
-            release/KnowMeBro-Setup-*.exe
-            release/KnowMeBro-Portable-*.exe
-          generate_release_notes: true
+            release-assets/KnowMeBro.apk
+            release-assets/KnowMeBro-Setup.exe
+            release-assets/KnowMeBro-Portable.exe
+          make_latest: true
+          generate_release_notes: false
