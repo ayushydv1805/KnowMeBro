@@ -69,7 +69,8 @@ export function clearStoredSession() {
 }
 
 export async function signUp(email, password, displayName) {
-  const data = await requestAuth('signup', { body: { email, password, data: { display_name: displayName } } });
+  const redirectTo = window.location.origin + '/';
+  const data = await requestAuth('signup?redirect_to=' + encodeURIComponent(redirectTo), { body: { email, password, data: { display_name: displayName } } });
   return normalizeSession(data);
 }
 
