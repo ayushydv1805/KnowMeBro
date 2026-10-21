@@ -57,4 +57,6 @@ Database migration history is tracked in `supabase/migrations/`. The public quiz
 - Alternate static host: https://knowmebro.onrender.com
 - Source: https://github.com/ayushydv1805/KnowMeBro
 
-GitHub Actions runs `npm test` and `npm run build` on pushes and pull requests to `main`.
+GitHub Actions runs regression tests, a production build, npm dependency auditing, and CodeQL static analysis on pull requests and pushes to `main`, with a scheduled weekly run. Dependabot proposes weekly npm and GitHub Actions updates.
+
+See [Security Policy](./SECURITY.md) to report a vulnerability and the [Production Readiness Checklist](./docs/PRODUCTION_READINESS.md) for the release gates and live-service checks.
