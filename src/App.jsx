@@ -253,8 +253,8 @@ function Results({code,onHome}){
    const timestamp=Date.parse(a?.created_at);
    return [typeof a?.friend_name==='string'?a.friend_name:'Unknown friend',Number.isFinite(a?.score)?a.score:'',totalQuestions,Number.isFinite(timestamp)?new Date(timestamp).toISOString():'Unknown'];
   })];
-  const csv=rows.map(row=>row.map(toSafeCsvCell).join(',')).join('\\r\\n');
-  const blob=new Blob(['\\uFEFF',csv],{type:'text/csv;charset=utf-8'});
+  const csv=rows.map(row=>row.map(toSafeCsvCell).join(',')).join('\r\n');
+  const blob=new Blob(['\uFEFF',csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const link=document.createElement('a');
   const safeCode=String(code||'quiz').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,40)||'quiz';
