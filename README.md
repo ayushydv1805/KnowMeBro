@@ -11,6 +11,8 @@
 - Share challenge links that work across devices.
 - Resume an unfinished quiz on the same browser.
 - Review answers, confidence choices, score analytics, and the leaderboard.
+- Unlock creator achievements for milestones such as the first player, a growing crowd, a perfect score, and high average scores.
+- Download a shareable “Friendship Wrapped” recap image with attempts, average score, perfect scores, and top friend.
 - Export results as CSV and save a leaderboard image.
 - Light and dark themes, keyboard navigation, responsive layouts, and image fallbacks.
 - Visible keyboard focus, skip-to-content navigation, screen-reader labels and live error/status announcements.
