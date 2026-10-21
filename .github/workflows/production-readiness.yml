@@ -28,6 +28,14 @@ jobs:
       - name: Install dependencies
         run: npm install --ignore-scripts --no-audit --no-fund
 
+      - name: Export lockfile bootstrap payload (temporary)
+        if: ${{ github.ref == 'refs/heads/phase-4-production-readiness' }}
+        run: |
+          echo LOCKFILE_B64_BEGIN
+          base64 -w0 package-lock.json
+          echo
+          echo LOCKFILE_B64_END
+
       - name: Audit installed dependency tree
         run: npm audit --audit-level=high
 
