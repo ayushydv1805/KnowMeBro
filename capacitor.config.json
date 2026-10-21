@@ -1,0 +1,10 @@
+{
+  "appId": "com.knowmebro.app",
+  "appName": "KnowMeBro",
+  "webDir": "dist",
+  "server": {
+    "url": "https://knowmebro.vercel.app",
+    "cleartext": false,
+    "allowNavigation": ["knowmebro.vercel.app"]
+  }
+}
