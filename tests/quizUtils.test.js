@@ -99,3 +99,69 @@ test('score tiers use percentages for 5-, 10-, and 20-question quizzes', () => {
 
   assert.equal(scoreTier(21, 20), 'invalid');
 });
+
+
+import { getCreatorAchievements, getCreatorRecap } from '../src/quizUtils.js';
+
+test('creator recap calculates attempts, average, perfect scores, and top friend', () => {
+  const recap = getCreatorRecap([
+    { friend_name: 'Asha', score: 10 },
+    { friend_name: 'Ravi', score: 8 },
+    { friend_name: 'Meera', score: 10 },
+    { friend_name: 'Invalid', score: 15 },
+    null,
+  ], 10);
+
+  assert.deepEqual(recap, {
+    totalAttempts: 3,
+    averageScore: 9.3,
+    averagePercent: 93,
+    perfectScores: 2,
+    topFriend: 'Asha',
+    topScore: 10,
+    totalQuestions: 10,
+  });
+});
+
+test('creator recap handles empty or malformed input safely', () => {
+  assert.deepEqual(getCreatorRecap(null, 10), {
+    totalAttempts: 0,
+    averageScore: 0,
+    averagePercent: 0,
+    perfectScores: 0,
+    topFriend: '',
+    topScore: 0,
+    totalQuestions: 10,
+  });
+  assert.equal(getCreatorRecap([{ score: 3 }], 0).totalAttempts, 0);
+});
+
+test('achievement milestones unlock at their stated thresholds', () => {
+  const attempts = [
+    { friend_name: 'Asha', score: 10 },
+    { friend_name: 'Ravi', score: 8 },
+    { friend_name: 'Meera', score: 10 },
+  ];
+  const badges = getCreatorAchievements(attempts, 10);
+  const byId = Object.fromEntries(badges.map((badge) => [badge.id, badge]));
+
+  assert.equal(byId['first-player'].unlocked, true);
+  assert.equal(byId['party-starter'].unlocked, false);
+  assert.equal(byId['perfect-score'].unlocked, true);
+  assert.equal(byId['mind-reader'].unlocked, true);
+  assert.equal(byId['quiz-architect'].unlocked, false);
+  assert.equal(byId['party-starter'].progressText, '3 / 5');
+});
+
+test('achievement progress stays bounded and does not unlock mind reader too early', () => {
+  const badges = getCreatorAchievements([
+    { friend_name: 'Asha', score: 5 },
+    { friend_name: 'Ravi', score: 5 },
+  ], 5);
+  const byId = Object.fromEntries(badges.map((badge) => [badge.id, badge]));
+
+  assert.equal(byId['mind-reader'].unlocked, false);
+  assert.ok(badges.every((badge) => badge.progress >= 0 && badge.progress <= 1));
+  assert.equal(byId['first-player'].progress, 1);
+  assert.equal(getCreatorAchievements([], 20).find((badge) => badge.id === 'quiz-architect').unlocked, true);
+});
