@@ -17,9 +17,9 @@ The `Production readiness` GitHub Actions workflow runs on pull requests and pus
 - [ ] Verify Vercel/alternate-host build output and environment settings without placing secret keys in frontend code.
 - [ ] Check the latest GitHub Actions run and resolve any audit or CodeQL findings before deployment.
 
-## Dependency lockfile note
+## Dependency management
 
-The repository currently does not commit `package-lock.json`. The workflow audits the dependency tree produced during its install, but that install can resolve newer compatible package versions on later runs. For reproducible installs, generate a lockfile in an environment with npm registry access, review it, commit it, and then switch CI from `npm install` to `npm ci`. Do not hand-write or guess transitive package versions or integrity hashes.
+The repository commits `package-lock.json`, and CI uses `npm ci` so the test/build/audit job installs the exact resolved dependency tree. Keep `package.json` and the lockfile in sync, review Dependabot changes before merging, and do not hand-write transitive package versions or integrity hashes.
 
 ## Live-service validation note
 
