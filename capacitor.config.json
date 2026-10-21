@@ -3,6 +3,8 @@
   "appName": "KnowMeBro",
   "webDir": "dist",
   "server": {
-    "androidScheme": "https"
+    "url": "https://knowmebro.vercel.app",
+    "cleartext": false,
+    "allowNavigation": ["knowmebro.vercel.app"]
   }
 }
