@@ -4,7 +4,7 @@ This checklist separates automated repository checks from checks that require ac
 
 ## Automated checks
 
-The `Production readiness` GitHub Actions workflow runs on pull requests and pushes to `main`, and weekly. It installs the dependency tree, fails on high-severity npm audit findings, runs the regression tests, builds the production bundle, and runs CodeQL static analysis. Dependabot proposes updates to npm dependencies and GitHub Actions.
+The `Production readiness` GitHub Actions workflow runs on pushes to branches, pull requests targeting `main`, and a weekly schedule. It installs the dependency tree, fails on high-severity npm audit findings, runs the regression tests, builds the production bundle, and runs CodeQL static analysis. Dependabot proposes updates to npm dependencies and GitHub Actions.
 
 ## Required before a production release
 
