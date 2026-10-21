@@ -142,3 +142,13 @@ export function getCreatorAchievements(attempts, totalQuestions) {
     milestone('quiz-architect', 'Quiz architect', '🏗️', 'Build a challenge with at least 15 questions.', recap.totalQuestions, 15, recap.totalQuestions >= 15),
   ];
 }
+
+
+// Keep exported CSV text safe when opened in spreadsheet applications.
+// CSV quoting alone does not prevent cells beginning with formula markers.
+export function toSafeCsvCell(value) {
+  const text = value == null ? '' : String(value);
+  const startsLikeFormula = /^[\u0000-\u0020\uFEFF]*[=+\-@]/u.test(text);
+  const safeText = typeof value === 'string' && startsLikeFormula ? `'${text}` : text;
+  return `"${safeText.replaceAll('"', '""')}"`;
+}
